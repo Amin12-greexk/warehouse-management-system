@@ -4,7 +4,7 @@ namespace App\Livewire\Admin\Users;
 
 use Livewire\Component;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+// HAPUS: use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Livewire\WithFileUploads;
 use Illuminate\Validation\Rule;
@@ -33,12 +33,22 @@ class Edit extends Component
     public function mount(User $user)
     {
         $this->user = $user;
-        $this->roles = Role::pluck('name', 'name')->all();
+        // GANTI INI:
+        // $this->roles = Role::pluck('name', 'name')->all();
+        // DENGAN INI:
+        $this->roles = [
+            'admin' => 'Admin',
+            'manager' => 'Manager',
+            'karyawan' => 'Karyawan',
+        ];
 
         $this->name = $user->name;
         $this->username = $user->username;
         $this->email = $user->email;
-        $this->role = $user->roles->first()->name ?? 'karyawan';
+        // GANTI INI:
+        // $this->role = $user->roles->first()->name ?? 'karyawan';
+        // DENGAN INI:
+        $this->role = $user->role;
         $this->existing_photo = $user->photo;
         $this->phone = $user->phone;
         $this->address = $user->address;
@@ -53,7 +63,10 @@ class Edit extends Component
             'username' => ['required', 'string', 'max:100', Rule::unique('users')->ignore($this->user->id)],
             'email' => ['required', 'email', 'max:255', Rule::unique('users')->ignore($this->user->id)],
             'password' => 'nullable|string|min:8|confirmed', // Password is optional on edit
-            'role' => 'required|string|exists:roles,name',
+            // GANTI INI:
+            // 'role' => 'required|string|exists:roles,name',
+            // DENGAN INI:
+            'role' => 'required|string|in:admin,manager,karyawan',
             'new_photo' => 'nullable|image|max:2048', // 2MB Max
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -77,6 +90,7 @@ class Edit extends Component
             'name' => $this->name,
             'username' => $this->username,
             'email' => $this->email,
+            'role' => $this->role, // <-- TAMBAHKAN ROLE SECARA MANUAL
             'photo' => $photoPath,
             'phone' => $this->phone,
             'address' => $this->address,
@@ -90,7 +104,9 @@ class Edit extends Component
         }
 
         $this->user->update($data);
-        $this->user->syncRoles([$this->role]); // Sinkronkan role
+
+        // HAPUS INI:
+        // $this->user->syncRoles([$this->role]);
 
         session()->flash('message', 'User berhasil diperbarui.');
         return $this->redirectRoute('admin.users.index');

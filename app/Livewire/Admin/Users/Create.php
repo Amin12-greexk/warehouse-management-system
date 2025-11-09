@@ -4,7 +4,7 @@ namespace App\Livewire\Admin\Users;
 
 use Livewire\Component;
 use App\Models\User;
-use Spatie\Permission\Models\Role;
+// HAPUS: use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Hash;
 use Livewire\WithFileUploads;
 
@@ -28,8 +28,14 @@ class Create extends Component
 
     public function mount()
     {
-        // Ambil roles yang sudah Anda buat (pastikan sudah di-seed)
-        $this->roles = Role::pluck('name', 'name')->all();
+        // GANTI INI:
+        // $this->roles = Role::pluck('name', 'name')->all();
+        // DENGAN INI:
+        $this->roles = [
+            'admin' => 'Admin',
+            'manager' => 'Manager',
+            'karyawan' => 'Karyawan',
+        ];
         $this->role = 'karyawan'; // Default role
     }
 
@@ -40,7 +46,10 @@ class Create extends Component
             'username' => 'required|string|max:100|unique:users,username',
             'email' => 'required|email|max:255|unique:users,email',
             'password' => 'required|string|min:8|confirmed',
-            'role' => 'required|string|exists:roles,name',
+            // GANTI INI:
+            // 'role' => 'required|string|exists:roles,name',
+            // DENGAN INI:
+            'role' => 'required|string|in:admin,manager,karyawan',
             'photo' => 'nullable|image|max:2048', // 2MB Max
             'phone' => 'nullable|string|max:20',
             'address' => 'nullable|string',
@@ -60,6 +69,7 @@ class Create extends Component
             'username' => $this->username,
             'email' => $this->email,
             'password' => Hash::make($this->password),
+            'role' => $this->role, // <-- TAMBAHKAN ROLE SECARA MANUAL
             'photo' => $photoPath,
             'phone' => $this->phone,
             'address' => $this->address,
@@ -67,7 +77,8 @@ class Create extends Component
             'status' => $this->status,
         ]);
 
-        $user->assignRole($this->role);
+        // HAPUS INI:
+        // $user->assignRole($this->role);
 
         session()->flash('message', 'User berhasil ditambahkan.');
         return $this->redirectRoute('admin.users.index');
