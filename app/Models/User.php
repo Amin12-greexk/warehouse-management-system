@@ -8,10 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+// HAPUS SEMUA IMPORT 'Spatie'
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable; // <-- HAPUS 'HasRoles' DARI SINI
 
     /**
      * The attributes that are mass assignable.
@@ -23,7 +24,7 @@ class User extends Authenticatable
         'username',
         'email',
         'password',
-        'role',
+        'role', // <-- Pastikan ini ada
         'photo',
         'phone',
         'address',
@@ -104,6 +105,7 @@ class User extends Authenticatable
      */
     public function scopeRole($query, $role)
     {
+        // Ganti ke logika manual
         return $query->where('role', $role);
     }
 
@@ -114,7 +116,7 @@ class User extends Authenticatable
     {
         return $this->photo
             ? asset('storage/' . $this->photo)
-            : asset('images/default-avatar.png');
+            : 'https://placehold.co/100x100/e2e8f0/718096?text=No+Image';
     }
 
     /**
@@ -122,6 +124,7 @@ class User extends Authenticatable
      */
     public function isAdmin(): bool
     {
+        // Ganti ke logika manual
         return $this->role === 'admin';
     }
 
@@ -130,6 +133,7 @@ class User extends Authenticatable
      */
     public function isManager(): bool
     {
+        // Ganti ke logika manual
         return $this->role === 'manager';
     }
 
@@ -138,6 +142,7 @@ class User extends Authenticatable
      */
     public function isEmployee(): bool
     {
+        // Ganti ke logika manual
         return $this->role === 'karyawan';
     }
 
@@ -146,6 +151,7 @@ class User extends Authenticatable
      */
     public function canApproveTransactions(): bool
     {
-        return in_array($this->role, ['admin']);
+        // Ganti ke logika manual
+        return in_array($this->role, ['admin', 'manager']);
     }
 }

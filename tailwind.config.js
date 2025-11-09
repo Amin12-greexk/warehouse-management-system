@@ -1,5 +1,6 @@
 import defaultTheme from 'tailwindcss/defaultTheme';
 import forms from '@tailwindcss/forms';
+import colors from 'tailwindcss/colors'; // <-- 1. IMPORT WARNA
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -13,6 +14,10 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+            },
+            // 2. TAMBAHKAN WARNA PRIMER DI SINI
+            colors: {
+                primary: colors.indigo,
             },
         },
     },
