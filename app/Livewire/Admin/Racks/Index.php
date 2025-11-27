@@ -21,6 +21,16 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function deleteRack($rackId)
     {
         $rack = Rack::findOrFail($rackId);

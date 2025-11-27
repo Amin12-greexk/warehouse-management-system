@@ -1,20 +1,3 @@
-<?php
-
-// INI ADALAH BLOK PHP YANG BENAR UNTUK LOGOUT
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
-
-// Definisikan fungsi logout di sini
-$logout = function () {
-    Auth::guard('web')->logout();
-    Session::invalidate();
-    Session::regenerateToken();
-    
-    // Redirect ke halaman login
-    return $this->redirect('/', navigate: true);
-};
-
-?>
 
 <nav x-data="{ open: false }" class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 shadow-lg border-b border-indigo-700">
     <!-- Primary Navigation Menu -->
@@ -133,14 +116,17 @@ $logout = function () {
 
                     <x-slot name="content">
                         <div class="py-1 bg-white rounded-lg shadow-xl border border-gray-100">
-                            <button wire:click="logout" class="w-full text-start">
-                                <x-dropdown-link class="flex items-center space-x-3 px-4 py-3 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-200 text-red-600">
-                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                                    </svg>
-                                    <span class="font-medium">{{ __('Log Out') }}</span>
-                                </x-dropdown-link>
-                            </button>
+                            <form method="POST" action="{{ route('logout') }}">
+                                @csrf
+                                <button type="submit" class="w-full text-start">
+                                    <x-dropdown-link class="flex items-center space-x-3 px-4 py-3 hover:bg-gradient-to-r hover:from-red-50 hover:to-pink-50 transition-all duration-200 text-red-600">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                                        </svg>
+                                        <span class="font-medium">{{ __('Log Out') }}</span>
+                                    </x-dropdown-link>
+                                </button>
+                            </form>
                         </div>
                     </x-slot>
                 </x-dropdown>
@@ -186,14 +172,17 @@ $logout = function () {
                 </x-responsive-nav-link> --}}
 
                 <!-- Authentication -->
-                <button wire:click="logout" class="w-full text-start">
-                    <x-responsive-nav-link class="text-red-100 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center space-x-2">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
-                        </svg>
-                        <span>{{ __('Log Out') }}</span>
-                    </x-responsive-nav-link>
-                </button>
+                <form method="POST" action="{{ route('logout') }}">
+                    @csrf
+                    <button type="submit" class="w-full text-start">
+                        <x-responsive-nav-link class="text-red-100 hover:bg-red-500/20 rounded-lg transition-all duration-200 flex items-center space-x-2">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+                            </svg>
+                            <span>{{ __('Log Out') }}</span>
+                        </x-responsive-nav-link>
+                    </button>
+                </form>
             </div>
         </div>
     </div>

@@ -21,6 +21,16 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function deleteSupplier($supplierId)
     {
         $supplier = Supplier::findOrFail($supplierId);

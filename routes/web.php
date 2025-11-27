@@ -16,11 +16,18 @@ Route::middleware('guest')->group(function () {
 
 // Authenticated routes
 Route::middleware('auth')->group(function () {
-    // OK: Ini adalah Closure, tidak butuh file
     Route::post('/logout', function () {
+        \App\Models\Activity::create([
+            'user_id' => auth()->id(),
+            'action' => 'logout',
+            'message' => 'User logged out',
+            'ip_address' => request()->ip(),
+            'user_agent' => request()->userAgent(),
+        ]);
+
         auth()->logout();
-        request()->session()->invalidate(); // <-- Perbaikan keamanan
-        request()->session()->regenerateToken(); // <-- Perbaikan keamanan
+        request()->session()->invalidate();
+        request()->session()->regenerateToken();
         return redirect()->route('login');
     })->name('logout');
 

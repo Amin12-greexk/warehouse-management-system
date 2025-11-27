@@ -22,6 +22,21 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingRoleFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStatusFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function deleteUser($userId)
     {
         $user = User::findOrFail($userId);

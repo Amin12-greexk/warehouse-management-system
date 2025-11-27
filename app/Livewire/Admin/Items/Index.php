@@ -70,6 +70,26 @@ class Index extends Component
         $this->resetPage();
     }
 
+    public function updatingTypeFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingSupplierFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingStockFilter()
+    {
+        $this->resetPage();
+    }
+
+    public function updatingPerPage()
+    {
+        $this->resetPage();
+    }
+
     public function createItem()
     {
         $this->resetForm();

@@ -12,6 +12,12 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware) {
+        // Push authenticated users away from the guest pages to the central redirect handler.
+        $middleware->redirectUsersTo('/redirect');
+
+        // Send unauthenticated users to the login form when they hit protected routes.
+        $middleware->redirectGuestsTo('/login');
+
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'manager' => \App\Http\Middleware\ManagerMiddleware::class,

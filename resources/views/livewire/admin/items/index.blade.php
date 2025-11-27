@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    <x-modal wire:model.live="showCreateModal" max-width="2xl">
+    <x-modal name="create-item-modal" wire:model.live="showCreateModal" max-width="2xl">
         <form wire:submit="save" class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">
                 {{ __('Tambah Item Baru') }}
@@ -117,7 +117,7 @@
         </form>
     </x-modal>
 
-    <x-modal wire:model.live="showEditModal" max-width="2xl">
+    <x-modal name="edit-item-modal" wire:model.live="showEditModal" max-width="2xl">
         <form wire:submit="save" class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">
                 {{ __('Edit Item') }}
