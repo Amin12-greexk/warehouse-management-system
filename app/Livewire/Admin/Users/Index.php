@@ -15,24 +15,22 @@ class Index extends Component
     public $statusFilter = '';
     public $perPage = 10;
 
-    protected $queryString = ['search', 'roleFilter', 'statusFilter'];
-
-    public function updatingSearch()
+    public function updatedSearch()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingRoleFilter()
+    public function updatedRoleFilter()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingStatusFilter()
+    public function updatedStatusFilter()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingPerPage()
+    public function updatedPerPage()
     {
         $this->resetPage();
     }

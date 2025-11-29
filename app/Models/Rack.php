@@ -38,6 +38,19 @@ class Rack extends Model
     ];
 
     /**
+     * Bridge legacy "rack_code" usage to the actual "code" column.
+     */
+    public function getRackCodeAttribute(): ?string
+    {
+        return $this->code;
+    }
+
+    public function setRackCodeAttribute($value): void
+    {
+        $this->attributes['code'] = $value;
+    }
+
+    /**
      * Get the items for the rack.
      */
     public function items(): HasMany

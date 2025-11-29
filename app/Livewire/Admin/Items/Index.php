@@ -37,8 +37,6 @@ class Index extends Component
     public $description;
     public $image;
 
-    protected $queryString = ['search', 'typeFilter', 'supplierFilter', 'stockFilter'];
-
     protected $rules = [
         'item_code' => 'required|unique:items,item_code',
         'name' => 'required|min:3',
@@ -65,27 +63,27 @@ class Index extends Component
         $this->item_code = 'ITM' . str_pad($lastNumber + 1, 5, '0', STR_PAD_LEFT);
     }
 
-    public function updatingSearch()
+    public function updatedSearch()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingTypeFilter()
+    public function updatedTypeFilter()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingSupplierFilter()
+    public function updatedSupplierFilter()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingStockFilter()
+    public function updatedStockFilter()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingPerPage()
+    public function updatedPerPage()
     {
         $this->resetPage();
     }

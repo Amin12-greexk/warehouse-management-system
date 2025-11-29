@@ -14,19 +14,17 @@ class Index extends Component
     public $statusFilter = '';
     public $perPage = 10;
 
-    protected $queryString = ['search', 'statusFilter'];
-
-    public function updatingSearch()
+    public function updatedSearch()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingStatusFilter()
+    public function updatedStatusFilter()
     {
-        $this->resetPage();
+        $this->resetPage('page');
     }
 
-    public function updatingPerPage()
+    public function updatedPerPage()
     {
         $this->resetPage();
     }
@@ -49,8 +47,10 @@ class Index extends Component
     {
         $racks = Rack::query()
             ->when($this->search, function ($query) {
-                $query->where('name', 'like', '%' . $this->search . '%')
-                    ->orWhere('rack_code', 'like', '%' . $this->search . '%');
+                $query->where(function ($q) {
+                    $q->where('name', 'like', '%' . $this->search . '%')
+                        ->orWhere('code', 'like', '%' . $this->search . '%');
+                });
             })
             ->when($this->statusFilter, function ($query) {
                 $query->where('status', $this->statusFilter);

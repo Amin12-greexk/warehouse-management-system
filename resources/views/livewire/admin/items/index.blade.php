@@ -46,7 +46,7 @@
                         </div>
                     </div>
 
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto" wire:key="item-table-{{ $search }}-{{ $typeFilter }}-{{ $stockFilter }}">
                         <table class="min-w-full divide-y divide-gray-200">
                             <thead class="bg-gray-50">
                                 <tr>
@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    <x-modal name="create-item-modal" wire:model.live="showCreateModal" max-width="2xl">
+    <x-modal name="create-item-modal" wire:model="showCreateModal" max-width="2xl">
         <form wire:submit="save" class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">
                 {{ __('Tambah Item Baru') }}
@@ -117,7 +117,7 @@
         </form>
     </x-modal>
 
-    <x-modal name="edit-item-modal" wire:model.live="showEditModal" max-width="2xl">
+    <x-modal name="edit-item-modal" wire:model="showEditModal" max-width="2xl">
         <form wire:submit="save" class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">
                 {{ __('Edit Item') }}

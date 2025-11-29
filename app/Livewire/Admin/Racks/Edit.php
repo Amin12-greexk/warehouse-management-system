@@ -27,7 +27,7 @@ class Edit extends Component
     protected function rules()
     {
         return [
-            'rack_code' => ['required', 'string', 'max:20', Rule::unique('racks')->ignore($this->rack->id)],
+            'rack_code' => ['required', 'string', 'max:20', Rule::unique('racks', 'code')->ignore($this->rack->id)],
             'name' => 'required|string|max:100',
             'location' => 'nullable|string|max:100',
             'status' => 'required|in:available,full,maintenance',
@@ -39,7 +39,7 @@ class Edit extends Component
         $this->validate();
 
         $this->rack->update([
-            'rack_code' => $this->rack_code,
+            'code' => $this->rack_code,
             'name' => $this->name,
             'location' => $this->location,
             'status' => $this->status,

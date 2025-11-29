@@ -20,6 +20,77 @@
     <div class="py-12 bg-gradient-to-br from-gray-50 via-blue-50 to-purple-50 min-h-screen">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
 
+            <!-- Quick Access Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <a href="{{ route('admin.users.index') }}" wire:navigate
+                    class="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-white/80 text-sm font-medium mb-1">Kelola</div>
+                            <h3 class="text-white text-xl font-bold mb-2">Users</h3>
+                            <div class="flex items-center text-white/90 text-sm">
+                                <span>Lihat semua</span>
+                                <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-users text-white text-2xl"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.items.index') }}" wire:navigate
+                    class="group bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-white/80 text-sm font-medium mb-1">Kelola</div>
+                            <h3 class="text-white text-xl font-bold mb-2">Items</h3>
+                            <div class="flex items-center text-white/90 text-sm">
+                                <span>Lihat semua</span>
+                                <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-box text-white text-2xl"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.suppliers.index') }}" wire:navigate
+                    class="group bg-gradient-to-br from-pink-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-white/80 text-sm font-medium mb-1">Kelola</div>
+                            <h3 class="text-white text-xl font-bold mb-2">Suppliers</h3>
+                            <div class="flex items-center text-white/90 text-sm">
+                                <span>Lihat semua</span>
+                                <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-2xl"></i>
+                        </div>
+                    </div>
+                </a>
+
+                <a href="{{ route('admin.racks.index') }}" wire:navigate
+                    class="group bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <div class="text-white/80 text-sm font-medium mb-1">Kelola</div>
+                            <h3 class="text-white text-xl font-bold mb-2">Racks</h3>
+                            <div class="flex items-center text-white/90 text-sm">
+                                <span>Lihat semua</span>
+                                <i class="fas fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                            </div>
+                        </div>
+                        <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                            <i class="fas fa-warehouse text-white text-2xl"></i>
+                        </div>
+                    </div>
+                </a>
+            </div>
+
             <!-- Stats Cards with Modern Design -->
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
                 <!-- Total Users Card -->

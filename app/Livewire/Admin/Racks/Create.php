@@ -25,7 +25,7 @@ class Create extends Component
     }
 
     protected $rules = [
-        'rack_code' => 'required|string|max:20|unique:racks,rack_code',
+        'rack_code' => 'required|string|max:20|unique:racks,code',
         'name' => 'required|string|max:100',
         'location' => 'nullable|string|max:100',
         'status' => 'required|in:available,full,maintenance',
@@ -36,7 +36,7 @@ class Create extends Component
         $this->validate();
 
         Rack::create([
-            'rack_code' => $this->rack_code,
+            'code' => $this->rack_code,
             'name' => $this->name,
             'location' => $this->location,
             'status' => $this->status,
