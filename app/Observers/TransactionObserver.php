@@ -7,8 +7,8 @@ use App\Models\Transaction;
 use App\Models\Activity;
 use App\Models\ItemFrequency;
 use App\Models\Notification;
-use App\Events\TransactionCreated;
-use App\Events\TransactionStatusChanged;
+// use App\Events\TransactionCreated;
+// use App\Events\TransactionStatusChanged;
 
 class TransactionObserver
 {
@@ -43,12 +43,12 @@ class TransactionObserver
                     'item' => $transaction->item->name,
                     'quantity' => $transaction->quantity,
                 ],
-                'action_url' => route('admin.transactions'),
+                'action_url' => route('admin.dashboard'),
             ]);
         }
 
         // Broadcast event
-        broadcast(new TransactionCreated($transaction))->toOthers();
+        // broadcast(new TransactionCreated($transaction))->toOthers();
     }
 
     public function updated(Transaction $transaction): void
@@ -99,11 +99,11 @@ class TransactionObserver
                     'status' => $newStatus,
                     'reason' => $transaction->rejection_reason,
                 ],
-                'action_url' => route('employee.history'),
+                'action_url' => route('employee.dashboard'),
             ]);
 
             // Broadcast event
-            broadcast(new TransactionStatusChanged($transaction))->toOthers();
+            // broadcast(new TransactionStatusChanged($transaction))->toOthers();
         }
     }
 }

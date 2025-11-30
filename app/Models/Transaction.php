@@ -180,9 +180,17 @@ class Transaction extends Model
      */
     public function getPhotoUrlAttribute(): string
     {
-        return $this->photo
-            ? Storage::url($this->photo)
-            : asset('images/no-photo.png');
+        if (! $this->photo) {
+            return 'https://via.placeholder.com/640x480?text=No+Photo';
+        }
+
+        // Jika sudah berupa URL absolut atau data URI, kembalikan apa adanya
+        if (str_starts_with($this->photo, 'http') || str_starts_with($this->photo, 'data:image')) {
+            return $this->photo;
+        }
+
+        // Gunakan URL berbasis host request agar port/host sesuai
+        return url('storage/'.$this->photo);
     }
 
     /**

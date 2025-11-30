@@ -2,17 +2,13 @@
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
-                <h2 class="font-bold text-2xl text-gray-800 leading-tight flex items-center space-x-3">
-                    <div
-                        class="w-10 h-10 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <i class="fas fa-th-large text-white text-xl"></i>
-                    </div>
-                    <span>{{ __('Admin Dashboard') }}</span>
+                <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+                    {{ __('Dashboard') }}
                 </h2>
-                <p class="mt-1 text-sm text-gray-500">Selamat datang kembali, {{ auth()->user()->name }}!</p>
+                <p class="mt-1 text-sm text-gray-600">Selamat datang, {{ auth()->user()->name }}</p>
             </div>
             <div class="text-sm text-gray-500 hidden md:block">
-                {{ now()->isoFormat('dddd, D MMMM YYYY') }}
+                <i class="far fa-calendar mr-2"></i>{{ now()->isoFormat('dddd, D MMMM YYYY') }}
             </div>
         </div>
     </x-slot>
@@ -221,77 +217,8 @@
                             <p class="text-sm text-gray-500 mt-1">Perbandingan barang masuk dan keluar</p>
                         </div>
                     </div>
-                    <div x-data="{
-                        init() {
-                            let chart = new Chart(this.$refs.monthlyChart, {
-                                type: 'bar',
-                                data: {
-                                    labels: @json($monthlyChart['labels']),
-                                    datasets: [
-                                        {
-                                            label: 'Barang Masuk',
-                                            data: @json($monthlyChart['dataIn']),
-                                            backgroundColor: 'rgba(99, 102, 241, 0.8)',
-                                            borderColor: 'rgba(99, 102, 241, 1)',
-                                            borderWidth: 2,
-                                            borderRadius: 8,
-                                            borderSkipped: false
-                                        },
-                                        {
-                                            label: 'Barang Keluar',
-                                            data: @json($monthlyChart['dataOut']),
-                                            backgroundColor: 'rgba(244, 63, 94, 0.8)',
-                                            borderColor: 'rgba(244, 63, 94, 1)',
-                                            borderWidth: 2,
-                                            borderRadius: 8,
-                                            borderSkipped: false
-                                        }
-                                    ]
-                                },
-                                options: {
-                                    scales: { 
-                                        y: { 
-                                            beginAtZero: true,
-                                            grid: {
-                                                color: 'rgba(0, 0, 0, 0.05)'
-                                            },
-                                            ticks: {
-                                                font: {
-                                                    size: 11
-                                                }
-                                            }
-                                        },
-                                        x: {
-                                            grid: {
-                                                display: false
-                                            },
-                                            ticks: {
-                                                font: {
-                                                    size: 11
-                                                }
-                                            }
-                                        }
-                                    },
-                                    responsive: true,
-                                    maintainAspectRatio: true,
-                                    plugins: {
-                                        legend: {
-                                            display: true,
-                                            position: 'bottom',
-                                            labels: {
-                                                usePointStyle: true,
-                                                padding: 15,
-                                                font: {
-                                                    size: 12
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }">
-                        <canvas x-ref="monthlyChart" class="max-h-80"></canvas>
+                    <div>
+                        <canvas id="monthlyChart" class="max-h-80"></canvas>
                     </div>
                 </div>
 
@@ -308,55 +235,114 @@
                         </h3>
                         <p class="text-sm text-gray-500 mt-1">Distribusi status stok</p>
                     </div>
-                    <div x-data="{
-                        init() {
-                            let chart = new Chart(this.$refs.stockChart, {
-                                type: 'doughnut',
-                                data: {
-                                    labels: @json($stockChart['labels']),
-                                    datasets: [{
-                                        data: @json($stockChart['data']),
-                                        backgroundColor: [
-                                            'rgba(16, 185, 129, 0.8)',
-                                            'rgba(251, 146, 60, 0.8)',
-                                            'rgba(239, 68, 68, 0.8)'
-                                        ],
-                                        borderColor: [
-                                            'rgba(16, 185, 129, 1)',
-                                            'rgba(251, 146, 60, 1)',
-                                            'rgba(239, 68, 68, 1)'
-                                        ],
-                                        borderWidth: 3
-                                    }]
-                                },
-                                options: { 
-                                    responsive: true,
-                                    maintainAspectRatio: true,
-                                    plugins: {
-                                        legend: {
-                                            display: true,
-                                            position: 'bottom',
-                                            labels: {
-                                                usePointStyle: true,
-                                                padding: 12,
-                                                font: {
-                                                    size: 11
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            });
-                        }
-                    }">
-                        <canvas x-ref="stockChart" class="max-h-64"></canvas>
+                    <div>
+                        <canvas id="stockChart" class="max-h-64"></canvas>
                     </div>
                 </div>
             </div>
 
+            <!-- Frequent Outgoing Items Chart -->
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                            <div class="w-8 h-8 bg-gradient-to-br from-red-400 to-pink-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-fire text-white text-sm"></i>
+                            </div>
+                            <span>Top 10 Barang Paling Sering Keluar</span>
+                        </h3>
+                        <p class="text-sm text-gray-500 mt-1">Statistik barang keluar dalam 30 hari terakhir</p>
+                    </div>
+                </div>
+                <div>
+                    <canvas id="frequentItemsChart" class="max-h-96"></canvas>
+                </div>
+            </div>
+
+            <!-- Rack Optimization Recommendations -->
+            @if($rackRecommendations->count() > 0)
+                <div class="mt-8 bg-white rounded-2xl shadow-sm border overflow-hidden hover:shadow-lg transition-shadow duration-300">
+                    <div class="p-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <div>
+                                <h3 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
+                                    <div class="w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-600 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-lightbulb text-white text-sm"></i>
+                                    </div>
+                                    <span>Rekomendasi Optimasi Rak</span>
+                                </h3>
+                                <p class="text-sm text-gray-500 mt-1">Barang sering keluar yang perlu dipindah ke rak dekat pintu</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-4">
+                            @foreach($rackRecommendations as $rec)
+                                <div class="border border-gray-200 rounded-xl p-4 hover:border-orange-300 hover:bg-orange-50/30 transition-all duration-200">
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <!-- Item Info -->
+                                        <div>
+                                            <label class="text-xs font-medium text-gray-500 uppercase">Barang</label>
+                                            <p class="text-sm font-semibold text-gray-900 mt-1">{{ $rec['item']->name }}</p>
+                                            <p class="text-xs text-gray-500">Kode: {{ $rec['item']->item_code }}</p>
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                                    <i class="fas fa-fire mr-1"></i>
+                                                    {{ $rec['out_frequency'] }}x keluar (30 hari)
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Current Rack -->
+                                        <div>
+                                            <label class="text-xs font-medium text-gray-500 uppercase">Rak Sekarang</label>
+                                            <p class="text-sm font-semibold text-gray-900 mt-1">{{ $rec['current_rack']->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ $rec['current_rack']->location }}</p>
+                                            <div class="mt-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+                                                    Jarak: {{ $rec['current_rack']->distance_score }}
+                                                </span>
+                                            </div>
+                                        </div>
+
+                                        <!-- Recommended Rack -->
+                                        <div>
+                                            <label class="text-xs font-medium text-gray-500 uppercase flex items-center">
+                                                <i class="fas fa-star text-yellow-500 mr-1"></i>
+                                                Rekomendasi Rak
+                                            </label>
+                                            <p class="text-sm font-semibold text-green-700 mt-1">{{ $rec['recommended_rack']->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ $rec['recommended_rack']->location }}</p>
+                                            <div class="mt-2 flex items-center space-x-2">
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+                                                    Jarak: {{ $rec['recommended_rack']->distance_score }}
+                                                </span>
+                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">
+                                                    <i class="fas fa-arrow-down mr-1"></i>
+                                                    Hemat {{ $rec['distance_improvement'] }} poin
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+
+                        <div class="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+                                <div class="text-sm text-blue-800">
+                                    <p class="font-semibold mb-1">Tips Optimasi:</p>
+                                    <p>Pindahkan barang yang sering keluar ke rak dengan distance_score rendah (dekat pintu) untuk efisiensi picking dan mengurangi waktu pengambilan barang.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
             <!-- Recent Transactions Table -->
             <div
-                class="bg-white overflow-hidden shadow-sm rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow duration-300">
+                class="mt-8 bg-white overflow-hidden shadow-sm rounded-2xl border border-gray-100 hover:shadow-lg transition-shadow duration-300">
                 <div class="p-8">
                     <div class="flex items-center justify-between mb-6">
                         <div>
@@ -447,12 +433,184 @@
         </div>
     </div>
 
-    @once
-        @push('scripts')
-            <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        @endpush
-        @push('styles')
-            <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        @endpush
-    @endonce
+    @push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Monthly Transactions Chart
+            const monthlyCtx = document.getElementById('monthlyChart');
+            if (monthlyCtx) {
+                new Chart(monthlyCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: @js($monthlyChart['labels']),
+                        datasets: [
+                            {
+                                label: 'Barang Masuk',
+                                data: @js($monthlyChart['dataIn']),
+                                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                                borderColor: 'rgba(99, 102, 241, 1)',
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'Barang Keluar',
+                                data: @js($monthlyChart['dataOut']),
+                                backgroundColor: 'rgba(244, 63, 94, 0.8)',
+                                borderColor: 'rgba(244, 63, 94, 1)',
+                                borderWidth: 2,
+                                borderRadius: 8,
+                                borderSkipped: false
+                            }
+                        ]
+                    },
+                    options: {
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 15,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Stock Status Chart
+            const stockCtx = document.getElementById('stockChart');
+            if (stockCtx) {
+                new Chart(stockCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: @js($stockChart['labels']),
+                        datasets: [{
+                            data: @js($stockChart['data']),
+                            backgroundColor: [
+                                'rgba(16, 185, 129, 0.8)',
+                                'rgba(251, 146, 60, 0.8)',
+                                'rgba(239, 68, 68, 0.8)'
+                            ],
+                            borderColor: [
+                                'rgba(16, 185, 129, 1)',
+                                'rgba(251, 146, 60, 1)',
+                                'rgba(239, 68, 68, 1)'
+                            ],
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'bottom',
+                                labels: {
+                                    usePointStyle: true,
+                                    padding: 12,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Frequent Outgoing Items Chart
+            const frequentItemsCtx = document.getElementById('frequentItemsChart');
+            if (frequentItemsCtx) {
+                new Chart(frequentItemsCtx, {
+                    type: 'bar',
+                    data: {
+                        labels: @js($frequentItemsChart['labels']),
+                        datasets: [{
+                            label: 'Jumlah Transaksi Keluar',
+                            data: @js($frequentItemsChart['data']),
+                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                            borderColor: 'rgba(239, 68, 68, 1)',
+                            borderWidth: 2,
+                            borderRadius: 8,
+                            borderSkipped: false
+                        }]
+                    },
+                    options: {
+                        indexAxis: 'y',
+                        scales: {
+                            x: {
+                                beginAtZero: true,
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.05)'
+                                },
+                                ticks: {
+                                    stepSize: 1,
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            },
+                            y: {
+                                grid: {
+                                    display: false
+                                },
+                                ticks: {
+                                    font: {
+                                        size: 11
+                                    }
+                                }
+                            }
+                        },
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.parsed.x + ' kali keluar';
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+    @endpush
 </div>

@@ -1,17 +1,15 @@
 import './bootstrap';
-import Alpine from 'alpinejs';
 import focus from '@alpinejs/focus';
 import persist from '@alpinejs/persist';
 
-// Alpine plugins
-Alpine.plugin(focus);
-Alpine.plugin(persist);
-
-// Make Alpine available globally
-window.Alpine = Alpine;
-
-// Start Alpine
-Alpine.start();
+// Daftarkan plugin ke Alpine bawaan Livewire (hindari double Alpine)
+document.addEventListener('alpine:init', () => {
+    if (!window.__appAlpinePluginsLoaded) {
+        Alpine.plugin(focus);
+        Alpine.plugin(persist);
+        window.__appAlpinePluginsLoaded = true;
+    }
+});
 
 // Import Chart.js
 import Chart from 'chart.js/auto';

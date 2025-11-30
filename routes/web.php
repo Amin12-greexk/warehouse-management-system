@@ -83,9 +83,9 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         // Route::get('/items/create', \App\Livewire\Admin\Items\Create::class)->name('items.create');
         // Route::get('/items/{item}/edit', \App\Livewire\Admin\Items\Edit::class)->name('items.edit');
     
-        // NONAKTIFKAN SEMENTARA: File Livewire Transaksi belum dibuat
-        // Route::get('/transactions', \App\Livewire\Admin\Transactions\Index::class)->name('transactions');
-        // Route::get('/transactions/{transaction}', \App\Livewire\Admin\Transactions\Show::class)->name('transactions.show');
+        // Transactions
+        Route::get('/transactions', \App\Livewire\Admin\Transactions\Index::class)->name('transactions.index');
+        Route::get('/transactions/{transaction}', \App\Livewire\Admin\Transactions\Show::class)->name('transactions.show');
     
         // NONAKTIFKAN SEMENTARA: File Livewire Laporan belum dibuat
         // Route::get('/reports', \App\Livewire\Admin\Reports\Index::class)->name('reports');
@@ -100,13 +100,14 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         // Route::get('/settings', \App\Livewire\Admin\Settings\Index::class)->name('settings');
     });
 
-// NONAKTIFKAN SEMENTARA: Grup Rute Manager (File Livewire belum dibuat)
+// Grup Rute Manager
 Route::middleware(['auth', \App\Http\Middleware\ManagerMiddleware::class])
     ->prefix('manager')
     ->name('manager.')
     ->group(function () {
-        // Route::get('/dashboard', \App\Livewire\Manager\Dashboard::class)->name('dashboard');
-        // Route::get('/items', \App\Livewire\Manager\Items\Index::class)->name('items.index');
+        Route::get('/dashboard', \App\Livewire\Manager\Dashboard::class)->name('dashboard');
+        Route::get('/users', \App\Livewire\Manager\Users\Index::class)->name('users.index');
+        // Route::get('/items', \App\Livewire\Manager\Items\Index::class)->name('items');
         // Route::get('/items/{item}', \App\Livewire\Manager\Items\Show::class)->name('items.show');
         // Route::get('/transactions', \App\Livewire\Manager\Transactions\Index::class)->name('transactions');
         // Route::get('/transactions/{transaction}', \App\Livewire\Manager\Transactions\Show::class)->name('transactions.show');
@@ -116,15 +117,15 @@ Route::middleware(['auth', \App\Http\Middleware\ManagerMiddleware::class])
         // Route::get('/team', \App\Livewire\Manager\Team\Index::class)->name('team');
     });
 
-// NONAKTIFKAN SEMENTARA: Grup Rute Karyawan (File Livewire belum dibuat)
+// Grup Rute Karyawan
 Route::middleware(['auth', \App\Http\Middleware\EmployeeMiddleware::class])
     ->prefix('employee')
     ->name('employee.')
     ->group(function () {
-        // Route::get('/dashboard', \App\Livewire\Employee\Dashboard::class)->name('dashboard');
+        Route::get('/dashboard', \App\Livewire\Employee\Dashboard::class)->name('dashboard');
+        Route::get('/transactions/create', \App\Livewire\Employee\Transactions\Create::class)->name('transactions.create');
         // Route::get('/items', \App\Livewire\Employee\Items\Index::class)->name('items.index');
         // Route::get('/items/{item}', \App\Livewire\Employee\Items\Show::class)->name('items.show');
-        // Route::get('/transactions/create', \App\Livewire\Employee\Transactions\Create::class)->name('transactions.create');
         // Route::get('/transactions/in', \App\Livewire\Employee\Transactions\In::class)->name('transactions.in');
         // Route::get('/transactions/out', \App\Livewire\Employee\Transactions\Out::class)->name('transactions.out');
         // Route::get('/history', \App\Livewire\Employee\Transactions\History::class)->name('history');

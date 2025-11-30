@@ -21,11 +21,14 @@ class Dashboard extends Component
     public $recentTransactions;
     public $monthlyChart = [];
     public $stockChart = [];
+    public $frequentItemsChart = [];
+    public $rackRecommendations = [];
 
     public function mount()
     {
         $this->loadStatistics();
         $this->loadCharts();
+        $this->loadRackRecommendations();
     }
 
     private function loadStatistics()
@@ -75,6 +78,72 @@ class Dashboard extends Component
                 Item::where('stock', 0)->count()
             ]
         ];
+
+        // Frequent outgoing items chart (last 30 days)
+        $frequentItems = Transaction::select('item_id', DB::raw('COUNT(*) as out_count'))
+            ->where('type', 'out')
+            ->where('status', 'approved')
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->groupBy('item_id')
+            ->orderBy('out_count', 'desc')
+            ->limit(10)
+            ->with('item')
+            ->get();
+
+        $this->frequentItemsChart = [
+            'labels' => $frequentItems->map(fn($t) => $t->item ? $t->item->name : 'Unknown')->toArray(),
+            'data' => $frequentItems->pluck('out_count')->toArray(),
+        ];
+    }
+
+    private function loadRackRecommendations()
+    {
+        // Get items with high outgoing frequency in the last 30 days
+        $frequentOutgoingItems = Transaction::select('item_id', DB::raw('COUNT(*) as out_count'))
+            ->where('type', 'out')
+            ->where('status', 'approved')
+            ->where('created_at', '>=', Carbon::now()->subDays(30))
+            ->groupBy('item_id')
+            ->orderBy('out_count', 'desc')
+            ->limit(10)
+            ->with(['item.rack'])
+            ->get();
+
+        // Get racks sorted by distance (closest to door first)
+        $closestRacks = Rack::where('status', '!=', 'maintenance')
+            ->orderBy('distance_score', 'asc')
+            ->take(5)
+            ->get();
+
+        $recommendations = [];
+
+        foreach ($frequentOutgoingItems as $transaction) {
+            $item = $transaction->item;
+            if (!$item || !$item->rack) continue;
+
+            $currentRack = $item->rack;
+
+            // Only recommend if current rack is not already optimal (distance_score > 30)
+            if ($currentRack->distance_score > 30) {
+                // Find best rack with available capacity
+                $bestRack = $closestRacks->first(function($rack) use ($item) {
+                    return $rack->id !== $item->rack_id &&
+                           ($rack->used_capacity < $rack->capacity);
+                });
+
+                if ($bestRack) {
+                    $recommendations[] = [
+                        'item' => $item,
+                        'current_rack' => $currentRack,
+                        'recommended_rack' => $bestRack,
+                        'out_frequency' => $transaction->out_count,
+                        'distance_improvement' => $currentRack->distance_score - $bestRack->distance_score,
+                    ];
+                }
+            }
+        }
+
+        $this->rackRecommendations = collect($recommendations)->take(5);
     }
 
     public function render()

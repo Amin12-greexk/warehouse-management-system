@@ -54,7 +54,7 @@ class UserSeeder extends Seeder
 
         // === EMPLOYEES ===
         $employees = [
-            ['name' => 'Budi Karyawan', 'username' => 'budi01', 'code' => 'EMP001', 'nik' => '3201234567890011'],
+            ['name' => 'Budi Karyawan', 'username' => 'kemu', 'code' => 'EMP001', 'nik' => '3201234567890011'],
             ['name' => 'Siti Operator', 'username' => 'siti01', 'code' => 'EMP002', 'nik' => '3201234567890022'],
             ['name' => 'Ahmad Worker', 'username' => 'ahmad01', 'code' => 'EMP003', 'nik' => '3201234567890033'],
         ];

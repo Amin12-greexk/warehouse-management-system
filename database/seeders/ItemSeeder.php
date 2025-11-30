@@ -38,14 +38,32 @@ class ItemSeeder extends Seeder
         ];
 
         foreach ($items as $index => $item) {
+            // Create varied stock levels for demo purposes
+            $minimumStock = rand(10, 30);
+
+            // 40% Normal stock (above 1.5x minimum)
+            // 30% Low stock (below minimum but > 0)
+            // 30% Out of stock (0)
+            $rand = rand(1, 10);
+            if ($rand <= 4) {
+                // Normal stock
+                $stock = rand($minimumStock * 2, $minimumStock * 5);
+            } elseif ($rand <= 7) {
+                // Low stock
+                $stock = rand(1, $minimumStock - 1);
+            } else {
+                // Out of stock
+                $stock = 0;
+            }
+
             Item::create([
                 'item_code' => 'ITM' . str_pad($index + 1, 5, '0', STR_PAD_LEFT),
                 'name' => $item['name'],
                 'type' => $item['type'],
                 'supplier_id' => $suppliers[array_rand($suppliers)],
                 'rack_id' => $racks[array_rand($racks)],
-                'stock' => rand(50, 200),
-                'minimum_stock' => rand(10, 30),
+                'stock' => $stock,
+                'minimum_stock' => $minimumStock,
                 'unit' => $item['unit'],
                 'price' => $item['price'],
                 'description' => 'High quality ' . strtolower($item['name']) . ' for industrial use',
