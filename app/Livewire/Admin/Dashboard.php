@@ -23,11 +23,16 @@ class Dashboard extends Component
     public $stockChart = [];
     public $frequentItemsChart = [];
     public $rackRecommendations = [];
+    public $top10Items7Days = [];
+    public $dosItems = [];
+    public $anomalyItems = [];
+    public $quickSlotting = [];
 
     public function mount()
     {
         $this->loadStatistics();
         $this->loadCharts();
+        $this->loadAdvancedAnalytics();
         $this->loadRackRecommendations();
     }
 
@@ -94,6 +99,106 @@ class Dashboard extends Component
             'labels' => $frequentItems->map(fn($t) => $t->item ? $t->item->name : 'Unknown')->toArray(),
             'data' => $frequentItems->pluck('out_count')->toArray(),
         ];
+    }
+
+    private function loadAdvancedAnalytics()
+    {
+        $now = Carbon::now();
+
+        // === TOP 10 ITEMS (7 DAYS) WITH COMPARISON ===
+        $items7Days = Transaction::select('item_id', DB::raw('SUM(quantity) as qty_7d'), DB::raw('COUNT(*) as freq_7d'))
+            ->where('type', 'out')
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$now->copy()->subDays(7), $now])
+            ->groupBy('item_id')
+            ->orderBy('qty_7d', 'desc')
+            ->limit(10)
+            ->with('item')
+            ->get();
+
+        // Get previous week data for comparison
+        $itemsPrevWeek = Transaction::select('item_id', DB::raw('SUM(quantity) as qty_prev'))
+            ->where('type', 'out')
+            ->where('status', 'approved')
+            ->whereBetween('created_at', [$now->copy()->subDays(14), $now->copy()->subDays(7)])
+            ->groupBy('item_id')
+            ->pluck('qty_prev', 'item_id');
+
+        $this->top10Items7Days = $items7Days->map(function($t) use ($itemsPrevWeek) {
+            $qtyPrev = $itemsPrevWeek[$t->item_id] ?? 0;
+            $delta = $qtyPrev > 0 ? (($t->qty_7d - $qtyPrev) / $qtyPrev) * 100 : 0;
+
+            return [
+                'item' => $t->item,
+                'qty_7d' => $t->qty_7d,
+                'qty_prev' => $qtyPrev,
+                'delta' => round($delta, 1),
+                'freq_7d' => $t->freq_7d,
+                'is_high_freq_low_vol' => $t->freq_7d >= 5 && ($t->qty_7d / $t->freq_7d) <= 3,
+            ];
+        });
+
+        // === DAYS OF SUPPLY & REORDER POINT ===
+        $items30Days = Transaction::select('item_id', DB::raw('SUM(quantity) as qty_30d'))
+            ->where('type', 'out')
+            ->where('status', 'approved')
+            ->where('created_at', '>=', $now->copy()->subDays(30))
+            ->groupBy('item_id')
+            ->get()
+            ->keyBy('item_id');
+
+        $dosData = Item::where('status', 'active')
+            ->get()
+            ->map(function($item) use ($items30Days, $now) {
+                $qty30d = $items30Days[$item->id]->qty_30d ?? 0;
+                $add = $qty30d / 30; // Average Daily Demand
+
+                // Calculate standard deviation (simplified: use 30% of ADD as stddev)
+                $stddev = $add * 0.3;
+                $safetyStock = $stddev * 1.65;
+
+                $leadTime = $item->lead_time_days ?? 7; // Default 7 days if not set
+                $rop = ($add * $leadTime) + $safetyStock;
+
+                $dos = $add > 0 ? $item->stock / $add : null;
+
+                return [
+                    'item' => $item,
+                    'add' => round($add, 2),
+                    'rop' => round($rop, 2),
+                    'dos' => $dos ? round($dos, 1) : null,
+                    'current_stock' => $item->stock,
+                    'needs_restock' => $item->stock < $rop,
+                ];
+            })
+            ->filter(fn($d) => $d['dos'] !== null)
+            ->sortBy('dos')
+            ->take(5);
+
+        $this->dosItems = $dosData->values();
+
+        // === ANOMALY DETECTION (>50% jump) ===
+        $this->anomalyItems = $this->top10Items7Days->filter(fn($item) => $item['delta'] > 50)->values();
+
+        // === QUICK SLOTTING (Top 3 from Top 10) ===
+        $closestRacks = Rack::where('status', '!=', 'maintenance')
+            ->orderBy('distance_score', 'asc')
+            ->take(3)
+            ->get();
+
+        $this->quickSlotting = $this->top10Items7Days->take(3)->map(function($data, $index) use ($closestRacks) {
+            $item = $data['item'];
+            $currentRack = $item->rack;
+            $recommendedRack = $closestRacks[$index] ?? $closestRacks->first();
+
+            return [
+                'item' => $item,
+                'current_rack' => $currentRack,
+                'recommended_rack' => $recommendedRack,
+                'qty_7d' => $data['qty_7d'],
+                'improvement' => $currentRack ? $currentRack->distance_score - $recommendedRack->distance_score : 0,
+            ];
+        })->filter(fn($s) => $s['improvement'] > 0)->values();
     }
 
     private function loadRackRecommendations()

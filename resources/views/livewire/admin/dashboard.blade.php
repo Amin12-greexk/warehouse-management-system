@@ -241,22 +241,201 @@
                 </div>
             </div>
 
-            <!-- Frequent Outgoing Items Chart -->
-            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-shadow duration-300 mb-8">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-xl font-bold text-gray-900 flex items-center space-x-2">
-                            <div class="w-8 h-8 bg-gradient-to-br from-red-400 to-pink-600 rounded-lg flex items-center justify-center">
-                                <i class="fas fa-fire text-white text-sm"></i>
-                            </div>
-                            <span>Top 10 Barang Paling Sering Keluar</span>
-                        </h3>
-                        <p class="text-sm text-gray-500 mt-1">Statistik barang keluar dalam 30 hari terakhir</p>
+            <!-- Advanced Analytics Section -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+
+                <!-- Top 10 Items (7 Days) -->
+                <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border hover:shadow-lg transition-shadow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                                <div class="w-7 h-7 bg-gradient-to-br from-red-400 to-pink-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-fire text-white text-xs"></i>
+                                </div>
+                                <span>Top 10 Keluar (7 Hari)</span>
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-1">Perbandingan dengan minggu lalu</p>
+                        </div>
+                    </div>
+
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full text-sm">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Barang</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600">Qty 7h</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600">Minggu Lalu</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600">Delta</th>
+                                    <th class="px-3 py-2 text-center text-xs font-semibold text-gray-600">Freq</th>
+                                    <th class="px-3 py-2 text-left text-xs font-semibold text-gray-600">Chart</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-100">
+                                @forelse($top10Items7Days as $data)
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="px-3 py-2">
+                                            <div>
+                                                <p class="font-semibold text-gray-900">{{ $data['item']->name }}</p>
+                                                <p class="text-xs text-gray-500">{{ $data['item']->item_code }}</p>
+                                            </div>
+                                        </td>
+                                        <td class="px-3 py-2 text-center font-bold text-gray-900">{{ $data['qty_7d'] }}</td>
+                                        <td class="px-3 py-2 text-center text-gray-600">{{ $data['qty_prev'] }}</td>
+                                        <td class="px-3 py-2 text-center">
+                                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-semibold
+                                                {{ $data['delta'] > 50 ? 'bg-yellow-100 text-yellow-800' : ($data['delta'] > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600') }}">
+                                                @if($data['delta'] > 0)
+                                                    <i class="fas fa-arrow-up mr-1 text-xs"></i>
+                                                @elseif($data['delta'] < 0)
+                                                    <i class="fas fa-arrow-down mr-1 text-xs"></i>
+                                                @endif
+                                                {{ abs($data['delta']) }}%
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2 text-center">
+                                            <span class="inline-flex items-center">
+                                                {{ $data['freq_7d'] }}x
+                                                @if($data['is_high_freq_low_vol'])
+                                                    <i class="fas fa-bolt text-orange-500 ml-1" title="Frekuensi tinggi, volume kecil"></i>
+                                                @endif
+                                            </span>
+                                        </td>
+                                        <td class="px-3 py-2">
+                                            <div class="w-24 bg-gray-200 rounded-full h-2">
+                                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ min(100, ($data['qty_7d'] / max(...$top10Items7Days->pluck('qty_7d')->toArray())) * 100) }}%"></div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @empty
+                                    <tr><td colspan="6" class="px-3 py-4 text-center text-gray-500">Tidak ada data</td></tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
-                <div>
-                    <canvas id="frequentItemsChart" class="max-h-96"></canvas>
+
+                <!-- Days of Supply & ROP -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border hover:shadow-lg transition-shadow">
+                    <div class="mb-4">
+                        <h3 class="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                            <div class="w-7 h-7 bg-gradient-to-br from-orange-400 to-red-600 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-exclamation-triangle text-white text-xs"></i>
+                            </div>
+                            <span>Days of Supply</span>
+                        </h3>
+                        <p class="text-xs text-gray-500 mt-1">5 terendah + ROP alert</p>
+                    </div>
+
+                    <div class="space-y-3">
+                        @forelse($dosItems as $data)
+                            <div class="p-3 border rounded-lg {{ $data['needs_restock'] ? 'border-red-300 bg-red-50' : 'border-gray-200' }}">
+                                <div class="flex items-start justify-between mb-2">
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-sm text-gray-900">{{ $data['item']->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $data['item']->item_code }}</p>
+                                    </div>
+                                    @if($data['needs_restock'])
+                                        <span class="inline-flex items-center px-2 py-1 bg-red-100 text-red-800 text-xs font-bold rounded-full">
+                                            <i class="fas fa-bell mr-1"></i>Restock
+                                        </span>
+                                    @endif
+                                </div>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <span class="text-gray-500">DoS:</span>
+                                        <span class="font-bold ml-1
+                                            {{ $data['dos'] < 3 ? 'text-red-600' : ($data['dos'] < 7 ? 'text-yellow-600' : 'text-green-600') }}">
+                                            {{ $data['dos'] ?? '-' }} hari
+                                        </span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">Stock:</span>
+                                        <span class="font-bold ml-1">{{ $data['current_stock'] }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">ROP:</span>
+                                        <span class="font-bold ml-1">{{ $data['rop'] }}</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-gray-500">ADD:</span>
+                                        <span class="font-bold ml-1">{{ $data['add'] }}/hari</span>
+                                    </div>
+                                </div>
+                            </div>
+                        @empty
+                            <p class="text-sm text-gray-500 text-center py-4">Tidak ada data</p>
+                        @endforelse
+                    </div>
                 </div>
+            </div>
+
+            <!-- Anomaly & Quick Slotting -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+
+                <!-- Lonjakan Minggu Ini -->
+                @if($anomalyItems->count() > 0)
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border hover:shadow-lg transition-shadow">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                                <div class="w-7 h-7 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-white text-xs"></i>
+                                </div>
+                                <span>Lonjakan Minggu Ini</span>
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-1">Item naik >50% vs minggu lalu</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            @foreach($anomalyItems as $data)
+                                <div class="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div class="flex-1">
+                                        <p class="font-semibold text-sm text-gray-900">{{ $data['item']->name }}</p>
+                                        <p class="text-xs text-gray-500">{{ $data['qty_7d'] }} unit (7 hari)</p>
+                                    </div>
+                                    <span class="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-bold rounded-full">
+                                        <i class="fas fa-arrow-up mr-1"></i>{{ round($data['delta']) }}%
+                                    </span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
+                <!-- Quick Slotting -->
+                @if($quickSlotting->count() > 0)
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border hover:shadow-lg transition-shadow">
+                        <div class="mb-4">
+                            <h3 class="text-lg font-bold text-gray-900 flex items-center space-x-2">
+                                <div class="w-7 h-7 bg-gradient-to-br from-blue-400 to-indigo-600 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-shipping-fast text-white text-xs"></i>
+                                </div>
+                                <span>Quick Slotting</span>
+                            </h3>
+                            <p class="text-xs text-gray-500 mt-1">Top 3 untuk rak dekat pintu</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            @foreach($quickSlotting as $data)
+                                <div class="p-3 border border-blue-200 bg-blue-50 rounded-lg">
+                                    <div class="flex items-start justify-between mb-2">
+                                        <div class="flex-1">
+                                            <p class="font-semibold text-sm text-gray-900">{{ $data['item']->name }}</p>
+                                            <p class="text-xs text-gray-500">{{ $data['qty_7d'] }}x keluar (7h)</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center justify-between text-xs">
+                                        <span class="text-gray-600">{{ $data['current_rack']->code ?? '-' }}</span>
+                                        <i class="fas fa-arrow-right text-blue-600 mx-2"></i>
+                                        <span class="text-green-700 font-semibold">{{ $data['recommended_rack']->code }}</span>
+                                        <span class="ml-2 px-2 py-1 bg-green-100 text-green-700 rounded-full text-xs font-bold">
+                                            -{{ $data['improvement'] }} poin
+                                        </span>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <!-- Rack Optimization Recommendations -->
@@ -542,67 +721,6 @@
                                     padding: 12,
                                     font: {
                                         size: 11
-                                    }
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-
-            // Frequent Outgoing Items Chart
-            const frequentItemsCtx = document.getElementById('frequentItemsChart');
-            if (frequentItemsCtx) {
-                new Chart(frequentItemsCtx, {
-                    type: 'bar',
-                    data: {
-                        labels: @js($frequentItemsChart['labels']),
-                        datasets: [{
-                            label: 'Jumlah Transaksi Keluar',
-                            data: @js($frequentItemsChart['data']),
-                            backgroundColor: 'rgba(239, 68, 68, 0.8)',
-                            borderColor: 'rgba(239, 68, 68, 1)',
-                            borderWidth: 2,
-                            borderRadius: 8,
-                            borderSkipped: false
-                        }]
-                    },
-                    options: {
-                        indexAxis: 'y',
-                        scales: {
-                            x: {
-                                beginAtZero: true,
-                                grid: {
-                                    color: 'rgba(0, 0, 0, 0.05)'
-                                },
-                                ticks: {
-                                    stepSize: 1,
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            },
-                            y: {
-                                grid: {
-                                    display: false
-                                },
-                                ticks: {
-                                    font: {
-                                        size: 11
-                                    }
-                                }
-                            }
-                        },
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                display: false
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.parsed.x + ' kali keluar';
                                     }
                                 }
                             }
