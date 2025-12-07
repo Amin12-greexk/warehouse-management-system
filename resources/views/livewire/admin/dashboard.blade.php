@@ -271,6 +271,9 @@
                                 </tr>
                             </thead>
                             <tbody class="divide-y divide-gray-100">
+                                @php
+                                    $maxQty7d = $top10Items7Days->pluck('qty_7d')->max() ?: 1;
+                                @endphp
                                 @forelse($top10Items7Days as $data)
                                     <tr class="hover:bg-gray-50">
                                         <td class="px-3 py-2">
@@ -302,7 +305,7 @@
                                         </td>
                                         <td class="px-3 py-2">
                                             <div class="w-24 bg-gray-200 rounded-full h-2">
-                                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ min(100, ($data['qty_7d'] / max(...$top10Items7Days->pluck('qty_7d')->toArray())) * 100) }}%"></div>
+                                                <div class="bg-red-500 h-2 rounded-full" style="width: {{ min(100, ($data['qty_7d'] / $maxQty7d) * 100) }}%"></div>
                                             </div>
                                         </td>
                                     </tr>

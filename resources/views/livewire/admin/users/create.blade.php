@@ -1,16 +1,16 @@
-﻿<div>
+<div>
     <x-slot name="header">
-        <h2 classV="font-semibold text-xl text-gray-800 leading-tight">
+        <h2 class="font-semibold text-lg md:text-xl text-gray-800 leading-tight">
             {{ __('Tambah User Baru') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <form wire:submit.prevent="saveUser" class="p-6">
+    <div class="py-4 md:py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm rounded-lg md:rounded-xl">
+                <form wire:submit.prevent="saveUser" class="p-4 md:p-6">
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
                         <div>
                             <x-input-label for="name" :value="__('Nama Lengkap')" />
                             <x-text-input wire:model="name" id="name" class="block mt-1 w-full" type="text" required />
@@ -86,9 +86,10 @@
                         </div>
 
                         <div class="col-span-1 md:col-span-2">
-                            <x-input-label for="photo" :value="__('Foto Profil')" />
-                            <input wire:model="photo" type="file" id="photo"
+                            <x-input-label for="photo" :value="__('Foto Profil (Opsional)')" />
+                            <input wire:model="photo" type="file" id="photo" accept="image/*"
                                 class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100">
+                            <p class="mt-1 text-xs text-gray-500">Format: JPG, PNG, max 2MB (opsional)</p>
                             <x-input-error :messages="$errors->get('photo')" class="mt-2" />
 
                             @if ($photo)
@@ -100,13 +101,16 @@
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-end mt-6">
-                        <x-secondary-button onclick="history.back()" class="mr-3">
+                    <div class="flex flex-col-reverse md:flex-row items-stretch md:items-center justify-end mt-4 md:mt-6 gap-2 md:gap-3">
+                        <x-secondary-button type="button" onclick="history.back()" class="w-full md:w-auto justify-center">
                             {{ __('Batal') }}
                         </x-secondary-button>
 
-                        <x-primary-button>
-                            {{ __('Simpan User') }}
+                        <x-primary-button type="submit" wire:loading.attr="disabled" class="w-full md:w-auto justify-center">
+                            <span wire:loading.remove>{{ __('Simpan User') }}</span>
+                            <span wire:loading>
+                                <i class="fas fa-spinner fa-spin mr-2"></i>Menyimpan...
+                            </span>
                         </x-primary-button>
                     </div>
                 </form>
