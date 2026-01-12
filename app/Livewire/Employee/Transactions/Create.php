@@ -48,6 +48,29 @@ class Create extends Component
     {
         $this->validate();
 
+        $rack = Rack::find($this->rack_id);
+        if (! $rack) {
+            $this->addError('rack_id', 'Rak tidak ditemukan.');
+            return;
+        }
+
+        if ($this->type === 'in') {
+            if ($rack->status === 'maintenance') {
+                $this->addError('rack_id', 'Rak sedang maintenance dan tidak bisa dipakai.');
+                return;
+            }
+
+            if ($rack->manual_full || $rack->status === 'full' || $rack->available_capacity <= 0) {
+                $this->addError('rack_id', 'Rak sudah penuh. Pilih rak lain.');
+                return;
+            }
+
+            if ($rack->available_capacity < $this->quantity) {
+                $this->addError('rack_id', 'Kapasitas rak tidak cukup untuk jumlah ini.');
+                return;
+            }
+        }
+
         try {
             DB::beginTransaction();
 
@@ -99,11 +122,17 @@ class Create extends Component
         $items = Item::where('status', 'active')->orderBy('name')->get();
         $racks = Rack::where('status', '!=', 'maintenance')->orderBy('name')->get();
         $suppliers = Supplier::where('status', 'active')->orderBy('name')->get();
+        $selectedRack = null;
+
+        if ($this->rack_id) {
+            $selectedRack = $racks->firstWhere('id', (int) $this->rack_id) ?? Rack::find($this->rack_id);
+        }
 
         return view('livewire.employee.transactions.create', [
             'items' => $items,
             'racks' => $racks,
             'suppliers' => $suppliers,
+            'selectedRack' => $selectedRack,
         ])->layout('layouts.app');
     }
 }

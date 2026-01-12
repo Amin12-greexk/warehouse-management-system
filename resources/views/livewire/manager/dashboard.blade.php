@@ -128,12 +128,16 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Transaksi Bulanan</h3>
-                    <canvas id="monthlyChart" height="250"></canvas>
+                    <div class="h-64">
+                        <canvas id="monthlyChart" class="w-full h-full"></canvas>
+                    </div>
                 </div>
 
                 <div class="bg-white p-6 rounded-2xl shadow-sm border">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Status Stok</h3>
-                    <canvas id="stockChart" height="250"></canvas>
+                    <div class="h-64">
+                        <canvas id="stockChart" class="w-full h-full"></canvas>
+                    </div>
                 </div>
             </div>
 

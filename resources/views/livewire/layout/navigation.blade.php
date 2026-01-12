@@ -90,6 +90,17 @@
                                 <span>{{ __('Transaksi') }}</span>
                             </span>
                         </x-nav-link>
+
+                        <x-nav-link :href="route('admin.rack-full-reports.index')" :active="request()->routeIs('admin.rack-full-reports.*')" wire:navigate
+                            class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                </svg>
+                                <span>{{ __('Rak Penuh') }}</span>
+                            </span>
+                        </x-nav-link>
+
                     @endif {{-- GANTI @endrole DENGAN @endif --}}
 
                     <!-- MENU MANAGER -->
@@ -113,12 +124,40 @@
                                 <span>{{ __('Kelola User') }}</span>
                             </span>
                         </x-nav-link>
+
+                        <x-nav-link :href="route('manager.forecasts.index')" :active="request()->routeIs('manager.forecasts.*')" wire:navigate
+                            class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 19h16M4 15h4M4 11h8M4 7h12"></path>
+                                </svg>
+                                <span>{{ __('Forecasting') }}</span>
+                            </span>
+                        </x-nav-link>
                     @endif
                     
                     <!-- MENU KARYAWAN -->
                     {{-- GANTI @role('karyawan') DENGAN @if --}}
                     @if(auth()->user()->role == 'karyawan')
-                        {{-- Menu Karyawan (commented in original) --}}
+                        <x-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')" wire:navigate
+                            class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                                </svg>
+                                <span>{{ __('Dashboard') }}</span>
+                            </span>
+                        </x-nav-link>
+
+                        <x-nav-link :href="route('employee.rack-full-reports.index')" :active="request()->routeIs('employee.rack-full-reports.*')" wire:navigate
+                            class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
+                            <span class="flex items-center space-x-2">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"></path>
+                                </svg>
+                                <span>{{ __('Lapor Rak Penuh') }}</span>
+                            </span>
+                        </x-nav-link>
                     @endif {{-- GANTI @endrole DENGAN @endif --}}
 
                 </div>
@@ -179,7 +218,24 @@
                 class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
-             <!-- Tambahkan link menu responsif lainnya di sini jika perlu -->
+            @if(auth()->user()->role == 'admin')
+                <x-responsive-nav-link :href="route('admin.rack-full-reports.index')" :active="request()->routeIs('admin.rack-full-reports.*')" wire:navigate
+                    class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+                    {{ __('Rak Penuh') }}
+                </x-responsive-nav-link>
+            @endif
+            @if(auth()->user()->role == 'manager')
+                <x-responsive-nav-link :href="route('manager.forecasts.index')" :active="request()->routeIs('manager.forecasts.*')" wire:navigate
+                    class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+                    {{ __('Forecasting') }}
+                </x-responsive-nav-link>
+            @endif
+            @if(auth()->user()->role == 'karyawan')
+                <x-responsive-nav-link :href="route('employee.rack-full-reports.index')" :active="request()->routeIs('employee.rack-full-reports.*')" wire:navigate
+                    class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
+                    {{ __('Lapor Rak Penuh') }}
+                </x-responsive-nav-link>
+            @endif
         </div>
 
         <!-- Responsive Settings Options -->

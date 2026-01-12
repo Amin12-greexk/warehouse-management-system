@@ -76,6 +76,22 @@ class Item extends Model
     }
 
     /**
+     * Get the monthly demand history for the item.
+     */
+    public function monthlyDemands(): HasMany
+    {
+        return $this->hasMany(ItemMonthlyDemand::class);
+    }
+
+    /**
+     * Get the forecasts for the item.
+     */
+    public function forecasts(): HasMany
+    {
+        return $this->hasMany(Forecast::class);
+    }
+
+    /**
      * Scope a query to only include active items.
      */
     public function scopeActive($query)

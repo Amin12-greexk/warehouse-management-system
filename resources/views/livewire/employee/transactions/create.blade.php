@@ -66,10 +66,37 @@
                             <select wire:model="rack_id" id="rack_id" class="mt-1 block w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
                                 <option value="">-- Pilih Rak --</option>
                                 @foreach($racks as $rack)
-                                    <option value="{{ $rack->id }}">{{ $rack->name }} ({{ $rack->rack_code }}) - {{ $rack->location }}</option>
+                                    <option value="{{ $rack->id }}">
+                                        {{ $rack->name }} ({{ $rack->rack_code }}) - {{ $rack->location }}
+                                        @if($rack->status === 'full')
+                                            - Penuh
+                                        @endif
+                                    </option>
                                 @endforeach
                             </select>
                             <x-input-error :messages="$errors->get('rack_id')" class="mt-2" />
+                            @if($selectedRack && $type === 'in')
+                                @php
+                                    $isMaintenance = $selectedRack->status === 'maintenance';
+                                    $isManualFull = $selectedRack->manual_full;
+                                    $isFull = $isManualFull || $selectedRack->status === 'full' || $selectedRack->available_capacity <= 0;
+                                    $availableCapacity = $selectedRack->available_capacity;
+                                @endphp
+
+                                @if($isMaintenance)
+                                    <p class="mt-2 text-sm text-yellow-600">Rak ini sedang maintenance dan tidak bisa dipakai.</p>
+                                @elseif($isManualFull)
+                                    <p class="mt-2 text-sm text-red-600">Rak ini ditandai penuh secara manual.</p>
+                                @elseif($isFull)
+                                    <p class="mt-2 text-sm text-red-600">Rak ini sudah penuh ({{ $selectedRack->used_capacity }}/{{ $selectedRack->capacity }}).</p>
+                                @else
+                                    <p class="mt-2 text-sm text-gray-600">Sisa kapasitas: {{ $availableCapacity }}.</p>
+                                @endif
+
+                                @if(!$isMaintenance && !$isFull && $quantity && $availableCapacity < $quantity)
+                                    <p class="mt-1 text-sm text-red-600">Kapasitas tidak cukup untuk jumlah ini.</p>
+                                @endif
+                            @endif
                         </div>
 
                         <!-- Supplier (only for incoming) -->

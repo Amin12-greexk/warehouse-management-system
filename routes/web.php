@@ -86,6 +86,10 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         // Transactions
         Route::get('/transactions', \App\Livewire\Admin\Transactions\Index::class)->name('transactions.index');
         Route::get('/transactions/{transaction}', \App\Livewire\Admin\Transactions\Show::class)->name('transactions.show');
+
+        // Rack Full Reports
+        Route::get('/rack-full-reports', \App\Livewire\Admin\RackFullReports\Index::class)->name('rack-full-reports.index');
+
     
         // NONAKTIFKAN SEMENTARA: File Livewire Laporan belum dibuat
         // Route::get('/reports', \App\Livewire\Admin\Reports\Index::class)->name('reports');
@@ -107,6 +111,7 @@ Route::middleware(['auth', \App\Http\Middleware\ManagerMiddleware::class])
     ->group(function () {
         Route::get('/dashboard', \App\Livewire\Manager\Dashboard::class)->name('dashboard');
         Route::get('/users', \App\Livewire\Manager\Users\Index::class)->name('users.index');
+        Route::get('/forecasts', \App\Livewire\Manager\Forecasts\Index::class)->name('forecasts.index');
         // Route::get('/items', \App\Livewire\Manager\Items\Index::class)->name('items');
         // Route::get('/items/{item}', \App\Livewire\Manager\Items\Show::class)->name('items.show');
         // Route::get('/transactions', \App\Livewire\Manager\Transactions\Index::class)->name('transactions');
@@ -124,6 +129,7 @@ Route::middleware(['auth', \App\Http\Middleware\EmployeeMiddleware::class])
     ->group(function () {
         Route::get('/dashboard', \App\Livewire\Employee\Dashboard::class)->name('dashboard');
         Route::get('/transactions/create', \App\Livewire\Employee\Transactions\Create::class)->name('transactions.create');
+        Route::get('/rack-full-reports', \App\Livewire\Employee\RackFullReports\Index::class)->name('rack-full-reports.index');
         // Route::get('/items', \App\Livewire\Employee\Items\Index::class)->name('items.index');
         // Route::get('/items/{item}', \App\Livewire\Employee\Items\Show::class)->name('items.show');
         // Route::get('/transactions/in', \App\Livewire\Employee\Transactions\In::class)->name('transactions.in');

@@ -51,6 +51,30 @@ class Index extends Component
             return;
         }
 
+        if ($transaction->type === 'in') {
+            $rack = $transaction->rack()->first();
+
+            if (! $rack) {
+                session()->flash('error', 'Rak transaksi tidak ditemukan.');
+                return;
+            }
+
+            if ($rack->status === 'maintenance') {
+                session()->flash('error', 'Rak sedang maintenance. Tolak transaksi atau pilih rak lain.');
+                return;
+            }
+
+            if ($rack->manual_full || $rack->status === 'full' || $rack->available_capacity <= 0) {
+                session()->flash('error', 'Rak sudah penuh. Tolak transaksi atau pilih rak lain.');
+                return;
+            }
+
+            if ($rack->available_capacity < $transaction->quantity) {
+                session()->flash('error', 'Kapasitas rak tidak cukup untuk jumlah transaksi ini.');
+                return;
+            }
+        }
+
         $transaction->update([
             'status' => 'approved',
             'approved_by' => auth()->id(),

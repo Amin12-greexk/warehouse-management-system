@@ -24,6 +24,7 @@ class Rack extends Model
         'used_capacity',
         'description',
         'status',
+        'manual_full',
     ];
 
     /**
@@ -35,6 +36,7 @@ class Rack extends Model
         'distance_score' => 'integer',
         'capacity' => 'integer',
         'used_capacity' => 'integer',
+        'manual_full' => 'boolean',
     ];
 
     /**
@@ -80,6 +82,7 @@ class Rack extends Model
     public function scopeAvailable($query)
     {
         return $query->where('status', 'available')
+            ->where('manual_full', false)
             ->whereRaw('used_capacity < capacity');
     }
 
@@ -114,7 +117,7 @@ class Rack extends Model
      */
     public function getIsFullAttribute(): bool
     {
-        return $this->used_capacity >= $this->capacity;
+        return $this->manual_full || $this->used_capacity >= $this->capacity;
     }
 
     /**
@@ -137,7 +140,9 @@ class Rack extends Model
     {
         $this->used_capacity = $this->items()->sum('stock');
 
-        if ($this->used_capacity >= $this->capacity) {
+        if ($this->manual_full) {
+            $this->status = 'full';
+        } elseif ($this->used_capacity >= $this->capacity) {
             $this->status = 'full';
         } elseif ($this->used_capacity > 0) {
             $this->status = 'available';
