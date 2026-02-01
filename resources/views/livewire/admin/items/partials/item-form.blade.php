@@ -1,9 +1,15 @@
 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
     <div>
         <x-input-label for="item_code" value="Kode Barang" />
-        <x-text-input wire:model="item_code" id="item_code" type="text" class="mt-1 block w-full bg-gray-100"
-            readonly />
+        <x-text-input wire:model="item_code" id="item_code" type="text" class="mt-1 block w-full"
+            placeholder="Kode otomatis, bisa diubah jika perlu" />
         <x-input-error :messages="$errors->get('item_code')" class="mt-2" />
+    </div>
+    <div>
+        <x-input-label for="barcode" value="Barcode (Opsional)" />
+        <x-text-input wire:model="barcode" id="barcode" type="text" class="mt-1 block w-full"
+            placeholder="Scan atau ketik barcode" />
+        <x-input-error :messages="$errors->get('barcode')" class="mt-2" />
     </div>
     <div>
         <x-input-label for="name" value="Nama Barang" />

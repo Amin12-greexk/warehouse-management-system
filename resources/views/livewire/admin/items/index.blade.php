@@ -1,4 +1,4 @@
-﻿<div>
+<div id="items-component-root">
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Master Barang') }}
@@ -7,6 +7,8 @@
 
     <div class="py-12">
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <input id="barcodeListener" type="text" autocomplete="off" autofocus
+                class="absolute -left-[9999px] w-1 h-1 opacity-0" />
             <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
                 <div class="p-6 text-gray-900">
 
@@ -24,7 +26,7 @@
                     <div class="flex flex-col md:flex-row justify-between gap-4 mb-4">
                         <div class="flex-grow">
                             <x-text-input wire:model.live.debounce.300ms="search"
-                                placeholder="Cari Kode atau Nama Barang..." class="w-full" />
+                                placeholder="Cari Kode, Barcode, atau Nama Barang..." class="w-full" />
                         </div>
                         <div class="flex-none flex space-x-2">
                             <select wire:model.live="typeFilter"
@@ -52,6 +54,8 @@
                                 <tr>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kode
                                     </th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Barcode
+                                    </th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama
                                         Barang</th>
                                     <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tipe
@@ -68,6 +72,7 @@
                                 @forelse ($items as $item)
                                     <tr wire:key="{{ $item->id }}">
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->item_code }}</td>
+                                        <td class="px-6 py-4 whitespace-nowrap">{{ $item->barcode ?? '-' }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->name }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->type_label }}</td>
                                         <td class="px-6 py-4 whitespace-nowrap">{{ $item->stock }} {{ $item->unit }}</td>
@@ -82,7 +87,7 @@
                                     </tr>
                                 @empty
                                     <tr>
-                                        <td colspan="6" class="px-6 py-4 text-center text-gray-500">Tidak ada barang
+                                        <td colspan="7" class="px-6 py-4 text-center text-gray-500">Tidak ada barang
                                             ditemukan.</td>
                                     </tr>
                                 @endforelse
@@ -98,7 +103,7 @@
         </div>
     </div>
 
-    <x-modal name="create-item-modal" wire:model="showCreateModal" max-width="2xl">
+    <x-modal name="create-item-modal" max-width="2xl">
         <form wire:submit="save" class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">
                 {{ __('Tambah Item Baru') }}
@@ -107,7 +112,9 @@
             @include('livewire.admin.items.partials.item-form')
 
             <div class="mt-6 flex justify-end">
-                <x-secondary-button wire:click="$set('showCreateModal', false)" wire:loading.attr="disabled">
+                <x-secondary-button wire:click="closeCreateModal"
+                    x-on:click="$dispatch('close-modal', 'create-item-modal')"
+                    wire:loading.attr="disabled">
                     {{ __('Batal') }}
                 </x-secondary-button>
                 <x-primary-button class="ms-3" wire:loading.attr="disabled">
@@ -117,7 +124,7 @@
         </form>
     </x-modal>
 
-    <x-modal name="edit-item-modal" wire:model="showEditModal" max-width="2xl">
+    <x-modal name="edit-item-modal" max-width="2xl">
         <form wire:submit="save" class="p-6">
             <h2 class="text-lg font-medium text-gray-900 mb-4">
                 {{ __('Edit Item') }}
@@ -126,7 +133,9 @@
             @include('livewire.admin.items.partials.item-form')
 
             <div class="mt-6 flex justify-end">
-                <x-secondary-button wire:click="$set('showEditModal', false)" wire:loading.attr="disabled">
+                <x-secondary-button wire:click="closeEditModal"
+                    x-on:click="$dispatch('close-modal', 'edit-item-modal')"
+                    wire:loading.attr="disabled">
                     {{ __('Batal') }}
                 </x-secondary-button>
                 <x-primary-button class="ms-3" wire:loading.attr="disabled">
@@ -135,6 +144,113 @@
             </div>
         </form>
     </x-modal>
+
+    <x-modal name="stock-item-modal" max-width="xl">
+        <form wire:submit.prevent="saveStockAdjustment" class="p-6">
+            <h2 class="text-lg font-medium text-gray-900 mb-4">
+                {{ __('Tambah Stok Barang') }}
+            </h2>
+
+            @if ($stockItem)
+                <div class="mb-4 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                        <div>
+                            <div class="text-gray-500">Nama</div>
+                            <div class="font-medium text-gray-900">{{ $stockItem->name }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Kode</div>
+                            <div class="font-medium text-gray-900">{{ $stockItem->item_code }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Barcode</div>
+                            <div class="font-medium text-gray-900">{{ $stockItem->barcode ?? '-' }}</div>
+                        </div>
+                        <div>
+                            <div class="text-gray-500">Stok Saat Ini</div>
+                            <div class="font-medium text-gray-900">{{ $stockItem->stock }} {{ $stockItem->unit }}</div>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <div>
+                <x-input-label for="stockAdjust" value="Tambah Stok" />
+                <x-text-input wire:model="stockAdjust" id="stockAdjust" type="number" min="1" class="mt-1 block w-full" />
+                <x-input-error :messages="$errors->get('stockAdjust')" class="mt-2" />
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <x-secondary-button type="button" wire:click="closeStockModal"
+                    x-on:click="$dispatch('close-modal', 'stock-item-modal')">
+                    {{ __('Batal') }}
+                </x-secondary-button>
+                <x-primary-button class="ms-3">
+                    {{ __('Simpan Stok') }}
+                </x-primary-button>
+            </div>
+        </form>
+    </x-modal>
+
+    @push('scripts')
+    <script>
+        (() => {
+            if (window.__barcodeScannerBound) {
+                return;
+            }
+
+            window.__barcodeScannerBound = true;
+            let buffer = '';
+            let lastTime = 0;
+            let flushTimer = null;
+            const resetAfterMs = 500;
+            const flushAfterMs = 300;
+            const minLength = 6;
+
+            document.addEventListener('keydown', (event) => {
+                const now = Date.now();
+                if (now - lastTime > resetAfterMs) {
+                    buffer = '';
+                }
+                lastTime = now;
+
+                if (event.key === 'Enter' || event.key === 'Tab') {
+                    if (buffer.length >= minLength && window.Livewire) {
+                        event.preventDefault();
+                        const root = document.getElementById('items-component-root');
+                        const componentId = root ? root.getAttribute('wire:id') : null;
+                        if (componentId) {
+                            Livewire.find(componentId).call('applyBarcode', buffer);
+                        } else {
+                            Livewire.dispatch('scan-barcode', { code: buffer });
+                        }
+                    }
+                    buffer = '';
+                    return;
+                }
+
+                if (event.key.length === 1) {
+                    buffer += event.key;
+                    if (flushTimer) {
+                        clearTimeout(flushTimer);
+                    }
+                    flushTimer = setTimeout(() => {
+                        if (buffer.length >= minLength && window.Livewire) {
+                            const root = document.getElementById('items-component-root');
+                            const componentId = root ? root.getAttribute('wire:id') : null;
+                            if (componentId) {
+                                Livewire.find(componentId).call('applyBarcode', buffer);
+                            } else {
+                                Livewire.dispatch('scan-barcode', { code: buffer });
+                            }
+                        }
+                        buffer = '';
+                    }, flushAfterMs);
+                }
+            });
+        })();
+    </script>
+    @endpush
 
     {{--
     @php

@@ -160,7 +160,7 @@
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                             <div class="flex flex-col space-y-1">
-                                                <a href="{{ route('admin.transactions.show', $transaction) }}" wire:navigate
+                                                <a href="{{ route('admin.transactions.show', $transaction) }}"
                                                     class="text-indigo-600 hover:text-indigo-900">
                                                     <i class="fas fa-eye"></i> Detail
                                                 </a>

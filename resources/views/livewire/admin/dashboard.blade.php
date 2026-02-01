@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <div class="flex items-center justify-between">
             <div>
@@ -18,7 +18,7 @@
 
             <!-- Quick Access Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <a href="{{ route('admin.users.index') }}" wire:navigate
+                <a href="{{ route('admin.users.index') }}"
                     class="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
@@ -35,7 +35,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('admin.items.index') }}" wire:navigate
+                <a href="{{ route('admin.items.index') }}"
                     class="group bg-gradient-to-br from-purple-500 to-purple-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
@@ -52,7 +52,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('admin.suppliers.index') }}" wire:navigate
+                <a href="{{ route('admin.suppliers.index') }}"
                     class="group bg-gradient-to-br from-pink-500 to-pink-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>
@@ -69,7 +69,7 @@
                     </div>
                 </a>
 
-                <a href="{{ route('admin.racks.index') }}" wire:navigate
+                <a href="{{ route('admin.racks.index') }}"
                     class="group bg-gradient-to-br from-indigo-500 to-indigo-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>

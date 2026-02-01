@@ -6,7 +6,7 @@
             <div class="flex">
                 <!-- Logo -->
                 <div class="shrink-0 flex items-center">
-                    <a href="{{ route('redirect') }}" wire:navigate class="flex items-center space-x-3 group">
+                    <a href="{{ route('redirect') }}" class="flex items-center space-x-3 group">
                         <div class="relative">
                             <x-application-logo class="block h-10 w-auto fill-current text-white drop-shadow-lg group-hover:scale-110 transition-transform duration-300" />
                             <div class="absolute inset-0 bg-white/20 rounded-full blur-xl group-hover:bg-white/30 transition-all duration-300"></div>
@@ -21,7 +21,7 @@
                     <!-- MENU ADMIN -->
                     {{-- GANTI @role('admin') DENGAN @if --}}
                     @if(auth()->user()->role == 'admin')
-                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" wire:navigate 
+                        <x-nav-link :href="route('admin.dashboard')" :active="request()->routeIs('admin.dashboard')" 
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -47,28 +47,28 @@
                                 </x-slot>
                                 <x-slot name="content">
                                     <div class="py-1 bg-white rounded-lg shadow-xl border border-gray-100">
-                                        <x-dropdown-link :href="route('admin.users.index')" wire:navigate 
+                                        <x-dropdown-link :href="route('admin.users.index')" 
                                             class="flex items-center space-x-3 px-4 py-3 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200">
                                             <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
                                             </svg>
                                             <span>{{ __('Users') }}</span>
                                         </x-dropdown-link>
-                                        <x-dropdown-link :href="route('admin.items.index')" wire:navigate 
+                                        <x-dropdown-link :href="route('admin.items.index')" 
                                             class="flex items-center space-x-3 px-4 py-3 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200">
                                             <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
                                             </svg>
                                             <span>{{ __('Items') }}</span>
                                         </x-dropdown-link>
-                                        <x-dropdown-link :href="route('admin.suppliers.index')" wire:navigate 
+                                        <x-dropdown-link :href="route('admin.suppliers.index')" 
                                             class="flex items-center space-x-3 px-4 py-3 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200">
                                             <svg class="w-4 h-4 text-pink-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
                                             </svg>
                                             <span>{{ __('Suppliers') }}</span>
                                         </x-dropdown-link>
-                                        <x-dropdown-link :href="route('admin.racks.index')" wire:navigate 
+                                        <x-dropdown-link :href="route('admin.racks.index')" 
                                             class="flex items-center space-x-3 px-4 py-3 hover:bg-gradient-to-r hover:from-indigo-50 hover:to-purple-50 transition-all duration-200">
                                             <svg class="w-4 h-4 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
@@ -81,7 +81,7 @@
                         </div>
 
                         <!-- Transaksi Link -->
-                        <x-nav-link :href="route('admin.transactions.index')" :active="request()->routeIs('admin.transactions.*')" wire:navigate
+                        <x-nav-link :href="route('admin.transactions.index')" :active="request()->routeIs('admin.transactions.*')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -91,7 +91,7 @@
                             </span>
                         </x-nav-link>
 
-                        <x-nav-link :href="route('admin.rack-full-reports.index')" :active="request()->routeIs('admin.rack-full-reports.*')" wire:navigate
+                        <x-nav-link :href="route('admin.rack-full-reports.index')" :active="request()->routeIs('admin.rack-full-reports.*')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,7 +105,7 @@
 
                     <!-- MENU MANAGER -->
                     @if(auth()->user()->role == 'manager')
-                        <x-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard')" wire:navigate
+                        <x-nav-link :href="route('manager.dashboard')" :active="request()->routeIs('manager.dashboard')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -115,7 +115,7 @@
                             </span>
                         </x-nav-link>
 
-                        <x-nav-link :href="route('manager.users.index')" :active="request()->routeIs('manager.users.*')" wire:navigate
+                        <x-nav-link :href="route('manager.users.index')" :active="request()->routeIs('manager.users.*')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -125,7 +125,7 @@
                             </span>
                         </x-nav-link>
 
-                        <x-nav-link :href="route('manager.forecasts.index')" :active="request()->routeIs('manager.forecasts.*')" wire:navigate
+                        <x-nav-link :href="route('manager.forecasts.index')" :active="request()->routeIs('manager.forecasts.*')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +139,7 @@
                     <!-- MENU KARYAWAN -->
                     {{-- GANTI @role('karyawan') DENGAN @if --}}
                     @if(auth()->user()->role == 'karyawan')
-                        <x-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')" wire:navigate
+                        <x-nav-link :href="route('employee.dashboard')" :active="request()->routeIs('employee.dashboard')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -149,7 +149,7 @@
                             </span>
                         </x-nav-link>
 
-                        <x-nav-link :href="route('employee.rack-full-reports.index')" :active="request()->routeIs('employee.rack-full-reports.*')" wire:navigate
+                        <x-nav-link :href="route('employee.rack-full-reports.index')" :active="request()->routeIs('employee.rack-full-reports.*')"
                             class="relative px-4 py-2 text-white/90 hover:text-white font-medium transition-all duration-200 hover:bg-white/10 rounded-lg group">
                             <span class="flex items-center space-x-2">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -214,24 +214,24 @@
     <!-- Responsive Navigation Menu -->
     <div :class="{'block': open, 'hidden': ! open}" class="hidden sm:hidden bg-white/10 backdrop-blur-lg">
         <div class="pt-2 pb-3 space-y-1 px-4">
-            <x-responsive-nav-link :href="route('redirect')" :active="request()->routeIs('dashboard')" wire:navigate 
+            <x-responsive-nav-link :href="route('redirect')" :active="request()->routeIs('dashboard')" 
                 class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                 {{ __('Dashboard') }}
             </x-responsive-nav-link>
             @if(auth()->user()->role == 'admin')
-                <x-responsive-nav-link :href="route('admin.rack-full-reports.index')" :active="request()->routeIs('admin.rack-full-reports.*')" wire:navigate
+                <x-responsive-nav-link :href="route('admin.rack-full-reports.index')" :active="request()->routeIs('admin.rack-full-reports.*')"
                     class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                     {{ __('Rak Penuh') }}
                 </x-responsive-nav-link>
             @endif
             @if(auth()->user()->role == 'manager')
-                <x-responsive-nav-link :href="route('manager.forecasts.index')" :active="request()->routeIs('manager.forecasts.*')" wire:navigate
+                <x-responsive-nav-link :href="route('manager.forecasts.index')" :active="request()->routeIs('manager.forecasts.*')"
                     class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                     {{ __('Forecasting') }}
                 </x-responsive-nav-link>
             @endif
             @if(auth()->user()->role == 'karyawan')
-                <x-responsive-nav-link :href="route('employee.rack-full-reports.index')" :active="request()->routeIs('employee.rack-full-reports.*')" wire:navigate
+                <x-responsive-nav-link :href="route('employee.rack-full-reports.index')" :active="request()->routeIs('employee.rack-full-reports.*')"
                     class="text-white hover:bg-white/10 rounded-lg transition-all duration-200">
                     {{ __('Lapor Rak Penuh') }}
                 </x-responsive-nav-link>
@@ -251,7 +251,7 @@
             </div>
 
             <div class="mt-3 space-y-1 px-4">
-                {{-- <x-responsive-nav-link :href="route('profile.show')" wire:navigate>
+                {{-- <x-responsive-nav-link :href="route('profile.show')">
                     {{ __('Profile') }}
                 </x-responsive-nav-link> --}}
 

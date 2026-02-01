@@ -41,6 +41,15 @@
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+                        <!-- Barcode Scan -->
+                        <div class="md:col-span-2">
+                            <x-input-label for="barcode" value="Scan Barcode Barang" />
+                            <x-text-input wire:model.live.debounce.300ms="barcode" wire:keydown.enter.prevent="applyBarcode"
+                                id="barcode" type="text" class="mt-1 block w-full"
+                                placeholder="Scan barcode atau ketik kode barang..." />
+                            <x-input-error :messages="$errors->get('barcode')" class="mt-2" />
+                            <p class="text-xs text-gray-500 mt-1">Tekan Enter setelah scan jika scanner tidak otomatis.</p>
+                        </div>
                         <!-- Item Selection -->
                         <div>
                             <x-input-label for="item_id" value="Pilih Barang" />
@@ -52,6 +61,43 @@
                             </select>
                             <x-input-error :messages="$errors->get('item_id')" class="mt-2" />
                         </div>
+
+                        @php
+                            $selectedItem = $items->firstWhere('id', $item_id);
+                        @endphp
+                        @if ($selectedItem)
+                            <div class="md:col-span-2">
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="text-sm font-semibold text-blue-900 mb-2">Informasi Barang</div>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+                                        <div>
+                                            <div class="text-gray-500">Nama</div>
+                                            <div class="font-medium text-gray-900">{{ $selectedItem->name }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-gray-500">Kode</div>
+                                            <div class="font-medium text-gray-900">{{ $selectedItem->item_code }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-gray-500">Barcode</div>
+                                            <div class="font-medium text-gray-900">{{ $selectedItem->barcode ?? '-' }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-gray-500">Stok</div>
+                                            <div class="font-medium text-gray-900">{{ $selectedItem->stock }} {{ $selectedItem->unit }}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-gray-500">Status Stok</div>
+                                            <div class="font-medium text-gray-900">{!! $selectedItem->stock_status_badge !!}</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-gray-500">Rak</div>
+                                            <div class="font-medium text-gray-900">{{ $selectedItem->rack?->name ?? '-' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
 
                         <!-- Quantity -->
                         <div>

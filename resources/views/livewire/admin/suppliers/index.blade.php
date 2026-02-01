@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Master Supplier') }}
@@ -34,7 +34,7 @@
                                 <option value="inactive">Nonaktif</option>
                             </select>
                             <x-primary-button onclick="location.href='{{ route('admin.suppliers.create') }}'"
-                                wire:navigate>
+>
                                 Tambah Supplier
                             </x-primary-button>
                         </div>
@@ -75,7 +75,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.suppliers.edit', $supplier) }}" wire:navigate
+                                            <a href="{{ route('admin.suppliers.edit', $supplier) }}"
                                                 class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                             <button wire:click="deleteSupplier({{ $supplier->id }})"
                                                 wire:confirm="Anda yakin ingin menghapus supplier ini?"

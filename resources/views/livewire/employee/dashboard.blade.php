@@ -18,7 +18,7 @@
 
             <!-- Quick Access Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6 mb-4 md:mb-8">
-                <a href="{{ route('employee.transactions.create') }}" wire:navigate
+                <a href="{{ route('employee.transactions.create') }}"
                     class="group bg-gradient-to-br from-green-500 to-green-600 p-4 md:p-6 rounded-xl md:rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>

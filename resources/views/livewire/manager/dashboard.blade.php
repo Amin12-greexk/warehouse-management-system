@@ -18,7 +18,7 @@
 
             <!-- Quick Access Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-                <a href="{{ route('manager.users.index') }}" wire:navigate
+                <a href="{{ route('manager.users.index') }}"
                     class="group bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-1">
                     <div class="flex items-center justify-between">
                         <div>

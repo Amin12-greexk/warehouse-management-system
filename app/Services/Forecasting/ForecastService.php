@@ -8,10 +8,12 @@ use Illuminate\Support\Facades\DB;
 
 class ForecastService
 {
-    private const MIN_DATA_POINTS = 6;
+    private const MIN_DATA_POINTS = 1;
     private const TEST_SIZE_MONTHS = 3;
+    private const MAX_HISTORY_MONTHS = 36;
 
     private const METHOD_AUTO = 'auto';
+    private const METHOD_HYBRID = 'hybrid';
     private const METHOD_SEASONAL = 'seasonal';
     private const METHOD_TREND = 'trend';
     private const METHOD_SIMPLE = 'simple';
@@ -25,26 +27,31 @@ class ForecastService
 
     public function generate(
         int $horizon = 12,
-        int $seasonLength = 12,
+        int $seasonLength = 6,
         string $method = 'auto',
         string $source = 'qty_out',
         ?int $limit = null
     ): int {
+        @set_time_limit(0);
+        @ini_set('max_execution_time', '0');
+
         $method = $this->normalizeMethod($method);
-        $itemIds = ItemMonthlyDemand::query()
+        $query = ItemMonthlyDemand::query()
             ->select('item_id')
             ->distinct()
-            ->pluck('item_id');
+            ->orderBy('item_id');
 
         if ($limit) {
-            $itemIds = $itemIds->take($limit);
+            $query->limit($limit);
         }
 
         $runAt = now();
         $totalSaved = 0;
-        foreach ($itemIds as $itemId) {
-            $totalSaved += $this->generateForItem($itemId, $horizon, $seasonLength, $method, $source, $runAt);
-        }
+        $query->chunk(200, function ($rows) use (&$totalSaved, $horizon, $seasonLength, $method, $source, $runAt) {
+            foreach ($rows as $row) {
+                $totalSaved += $this->generateForItem((int) $row->item_id, $horizon, $seasonLength, $method, $source, $runAt);
+            }
+        });
 
         return $totalSaved;
     }
@@ -69,27 +76,41 @@ class ForecastService
         }
 
         $seriesData = $this->buildSeries($demands->toArray(), $source);
-        $series = $seriesData['series'];
+        $series = $this->trimRecentSeries($seriesData['series'], $seasonLength);
 
         if ($this->countNonZero($series) < self::MIN_DATA_POINTS) {
             return 0;
         }
 
         $seriesCount = count($series);
-        $testSize = min(self::TEST_SIZE_MONTHS, max(1, $seriesCount - 1));
-        $train = array_slice($series, 0, $seriesCount - $testSize);
-        $test = array_slice($series, $seriesCount - $testSize);
+        if ($seriesCount < 3) {
+            $finalMethod = self::METHOD_SIMPLE;
+            $result = $this->forecastSeries($series, $seasonLength, $horizon, $finalMethod);
+            $accuracy = ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
+        } else {
+            $testSize = $this->resolveTestSize($seriesCount, $seasonLength);
+            $train = array_slice($series, 0, $seriesCount - $testSize);
+            $test = array_slice($series, $seriesCount - $testSize);
 
-        $evalMethod = $method === self::METHOD_AUTO
-            ? $this->resolveAutoMethod(count($train))
-            : $method;
-        $evalResult = $this->forecastSeries($train, $seasonLength, $testSize, $evalMethod);
-        $accuracy = $this->calculateAccuracy($test, $evalResult['forecast']);
+            if ($method === self::METHOD_AUTO) {
+                $selection = $this->selectAutoMethod($train, $test, $seasonLength);
+                $evalMethod = $selection['method'];
+                $accuracy = $selection['accuracy'];
+            } elseif ($method === self::METHOD_HYBRID) {
+                $evalMethod = $this->selectHybridMethod($seriesCount, $seasonLength);
+                $evalResult = $this->forecastSeries($train, $seasonLength, $testSize, $evalMethod);
+                $accuracy = $this->calculateAccuracy($test, $evalResult['forecast']);
+            } else {
+                $evalMethod = $method;
+                $evalResult = $this->forecastSeries($train, $seasonLength, $testSize, $evalMethod);
+                $accuracy = $this->calculateAccuracy($test, $evalResult['forecast']);
+            }
 
-        $finalMethod = $method === self::METHOD_AUTO
-            ? $this->resolveAutoMethod($seriesCount)
-            : $method;
-        $result = $this->forecastSeries($series, $seasonLength, $horizon, $finalMethod);
+            $finalMethod = ($method === self::METHOD_AUTO || $method === self::METHOD_HYBRID)
+                ? $evalMethod
+                : $method;
+            $result = $this->forecastSeries($series, $seasonLength, $horizon, $finalMethod);
+        }
 
         $lastPeriod = $seriesData['end'];
         $saved = 0;
@@ -109,7 +130,7 @@ class ForecastService
                     ],
                     [
                         'predicted_qty' => max(0, (int) round($value)),
-                        'method' => $finalMethod,
+                        'method' => $result['method'] ?? $finalMethod,
                         'alpha' => $result['alpha'],
                         'beta' => $result['beta'],
                         'gamma' => $result['gamma'],
@@ -138,6 +159,7 @@ class ForecastService
 
         return match ($method) {
             self::METHOD_AUTO => self::METHOD_AUTO,
+            self::METHOD_HYBRID => self::METHOD_HYBRID,
             self::METHOD_SEASONAL,
             'holt-winters',
             'holt_winters',
@@ -156,13 +178,61 @@ class ForecastService
         };
     }
 
-    private function resolveAutoMethod(int $length): string
+    private function selectAutoMethod(array $train, array $test, int $seasonLength): array
     {
-        if ($length >= 24) {
+        $testSize = count($test);
+        if ($testSize === 0) {
+            return [
+                'method' => self::METHOD_SIMPLE,
+                'accuracy' => ['percent' => 0.0, 'value' => 0.0, 'samples' => 0],
+            ];
+        }
+
+        $candidates = [self::METHOD_SIMPLE, self::METHOD_TREND];
+        $seasonLength = max(2, $seasonLength);
+        if (count($train) >= ($seasonLength * 2)) {
+            $candidates[] = self::METHOD_SEASONAL;
+        }
+
+        $best = null;
+        foreach ($candidates as $candidate) {
+            $result = $this->forecastSeries($train, $seasonLength, $testSize, $candidate);
+            $accuracy = $this->calculateAccuracy($test, $result['forecast']);
+            $samples = $accuracy['samples'] ?? 0;
+            $score = $samples > 0 ? $accuracy['value'] : INF;
+
+            if ($best === null || $score < $best['score']) {
+                $best = [
+                    'method' => $candidate,
+                    'accuracy' => $accuracy,
+                    'score' => $score,
+                ];
+            }
+        }
+
+        if ($best === null) {
+            return [
+                'method' => self::METHOD_SIMPLE,
+                'accuracy' => ['percent' => 0.0, 'value' => 0.0, 'samples' => 0],
+            ];
+        }
+
+        return [
+            'method' => $best['method'],
+            'accuracy' => $best['accuracy'],
+        ];
+    }
+
+    private function selectHybridMethod(int $seriesCount, int $seasonLength): string
+    {
+        $seasonLength = max(2, $seasonLength);
+        $seasonalMin = $seasonLength * 2;
+
+        if ($seriesCount >= $seasonalMin) {
             return self::METHOD_SEASONAL;
         }
 
-        if ($length >= 12) {
+        if ($seriesCount >= $seasonLength) {
             return self::METHOD_TREND;
         }
 
@@ -186,7 +256,7 @@ class ForecastService
     {
         $seasonLength = max(2, $seasonLength);
 
-        return $this->holtWinters->fitAdditiveBest($series, $seasonLength, $horizon);
+        return $this->holtWinters->selectBest($series, $seasonLength, $horizon);
     }
 
     private function fitSimple(array $series, int $horizon): array
@@ -226,6 +296,7 @@ class ForecastService
         }
 
         return [
+            'method' => self::METHOD_SIMPLE,
             'forecast' => $forecast,
             'alpha' => $alpha,
             'beta' => null,
@@ -278,6 +349,7 @@ class ForecastService
         }
 
         return [
+            'method' => self::METHOD_TREND,
             'forecast' => $forecast,
             'alpha' => $alpha,
             'beta' => $beta,
@@ -300,15 +372,17 @@ class ForecastService
         }
 
         if (count($errors) === 0) {
-            return ['percent' => 0.0, 'value' => 0.0];
+            return ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
         }
 
-        $mape = array_sum($errors) / count($errors);
+        $samples = count($errors);
+        $mape = array_sum($errors) / $samples;
         $accuracyPercent = max(0, 100 - ($mape * 100));
 
         return [
             'percent' => round($accuracyPercent, 2),
             'value' => round($mape, 4),
+            'samples' => $samples,
         ];
     }
 
@@ -327,6 +401,34 @@ class ForecastService
     private function countNonZero(array $series): int
     {
         return count(array_filter($series, fn ($value) => $value > 0));
+    }
+
+    private function trimRecentSeries(array $series, int $seasonLength): array
+    {
+        $seasonLength = max(2, $seasonLength);
+        $keepMonths = max($seasonLength * 2, self::MAX_HISTORY_MONTHS);
+
+        if (count($series) <= $keepMonths) {
+            return $series;
+        }
+
+        return array_slice($series, -$keepMonths);
+    }
+
+    private function resolveTestSize(int $seriesCount, int $seasonLength): int
+    {
+        if ($seriesCount <= 1) {
+            return 1;
+        }
+
+        $defaultSize = min(self::TEST_SIZE_MONTHS, $seriesCount - 1);
+        $seasonLength = max(2, $seasonLength);
+
+        if ($seriesCount >= ($seasonLength * 3)) {
+            return min($seasonLength, $seriesCount - ($seasonLength * 2));
+        }
+
+        return $defaultSize;
     }
 
     private function buildSeries(array $rows, string $source): array

@@ -58,6 +58,7 @@ class ItemSeeder extends Seeder
 
             Item::create([
                 'item_code' => 'ITM' . str_pad($index + 1, 5, '0', STR_PAD_LEFT),
+                'barcode' => '899' . str_pad($index + 1, 10, '0', STR_PAD_LEFT),
                 'name' => $item['name'],
                 'type' => $item['type'],
                 'supplier_id' => $suppliers[array_rand($suppliers)],

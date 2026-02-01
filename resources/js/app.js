@@ -1,12 +1,10 @@
 import './bootstrap';
 import focus from '@alpinejs/focus';
-import persist from '@alpinejs/persist';
 
 // Daftarkan plugin ke Alpine bawaan Livewire (hindari double Alpine)
 document.addEventListener('alpine:init', () => {
     if (!window.__appAlpinePluginsLoaded) {
         Alpine.plugin(focus);
-        Alpine.plugin(persist);
         window.__appAlpinePluginsLoaded = true;
     }
 });

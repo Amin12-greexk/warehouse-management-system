@@ -4,7 +4,7 @@
             <h2 class="font-semibold text-xl text-gray-800 leading-tight">
                 Detail Transaksi
             </h2>
-            <a href="{{ route('admin.transactions.index') }}" wire:navigate class="text-sm text-gray-600 hover:text-gray-900">
+            <a href="{{ route('admin.transactions.index') }}" class="text-sm text-gray-600 hover:text-gray-900">
                 <i class="fas fa-arrow-left mr-1"></i> Kembali
             </a>
         </div>

@@ -105,18 +105,59 @@ class HoltWinters
             return $this->naiveAverage($series, $horizon);
         }
 
+        // Calculate initial level as average of first season
         $firstSeason = array_slice($series, 0, $seasonLength);
-        $secondSeason = array_slice($series, $seasonLength, $seasonLength);
-
         $level = array_sum($firstSeason) / $seasonLength;
-        $trend = ((array_sum($secondSeason) / $seasonLength) - $level) / $seasonLength;
 
+        // Calculate initial trend using first 2 seasons if available
+        if ($count >= $seasonLength * 2) {
+            $secondSeason = array_slice($series, $seasonLength, $seasonLength);
+            $trend = ((array_sum($secondSeason) / $seasonLength) - $level) / $seasonLength;
+        } else {
+            $trend = 0.0;
+        }
+
+        // Initialize seasonal indices using average across all available complete seasons
         $seasonals = [];
+        $numSeasons = intdiv($count, $seasonLength);
+
         for ($i = 0; $i < $seasonLength; $i++) {
-            if ($type === 'additive') {
-                $seasonals[$i] = $series[$i] - $level;
+            $seasonalSum = 0.0;
+            $seasonalCount = 0;
+
+            // Average the seasonal component across all seasons
+            for ($s = 0; $s < $numSeasons; $s++) {
+                $idx = $s * $seasonLength + $i;
+                if ($idx < $count) {
+                    $baseLevel = $level + ($trend * $idx);
+                    if ($type === 'additive') {
+                        $seasonalSum += $series[$idx] - $baseLevel;
+                    } else {
+                        $seasonalSum += $baseLevel == 0 ? 1 : ($series[$idx] / $baseLevel);
+                    }
+                    $seasonalCount++;
+                }
+            }
+
+            if ($seasonalCount > 0) {
+                $seasonals[$i] = $seasonalSum / $seasonalCount;
             } else {
-                $seasonals[$i] = $level == 0 ? 1 : ($series[$i] / $level);
+                $seasonals[$i] = $type === 'additive' ? 0 : 1;
+            }
+        }
+
+        // Normalize seasonals
+        if ($type === 'additive') {
+            $seasonalAvg = array_sum($seasonals) / $seasonLength;
+            for ($i = 0; $i < $seasonLength; $i++) {
+                $seasonals[$i] -= $seasonalAvg;
+            }
+        } else {
+            $seasonalAvg = array_sum($seasonals) / $seasonLength;
+            if ($seasonalAvg != 0) {
+                for ($i = 0; $i < $seasonLength; $i++) {
+                    $seasonals[$i] /= $seasonalAvg;
+                }
             }
         }
 

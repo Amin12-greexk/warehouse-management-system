@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Tambah Rak Baru') }}
@@ -43,7 +43,7 @@
                     </div>
 
                     <div class="flex items-center justify-end mt-6">
-                        <x-secondary-button wire:navigate href="{{ route('admin.racks.index') }}" class="mr-3">
+                        <x-secondary-button href="{{ route('admin.racks.index') }}" class="mr-3">
                             {{ __('Batal') }}
                         </x-secondary-button>
 

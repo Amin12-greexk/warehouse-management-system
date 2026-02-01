@@ -19,6 +19,7 @@ class Item extends Model
      */
     protected $fillable = [
         'item_code',
+        'barcode',
         'name',
         'type',
         'supplier_id',

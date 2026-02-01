@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Master Pengguna') }}
@@ -40,7 +40,7 @@
                                 <option value="active">Aktif</option>
                                 <option value="inactive">Nonaktif</option>
                             </select>
-                            <x-primary-button onclick="location.href='{{ route('admin.users.create') }}'" wire:navigate>
+                            <x-primary-button onclick="location.href='{{ route('admin.users.create') }}'">
                                 Tambah User
                             </x-primary-button>
                         </div>
@@ -81,7 +81,7 @@
                                             @endif
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.users.edit', $user) }}" wire:navigate
+                                            <a href="{{ route('admin.users.edit', $user) }}"
                                                 class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                             <button wire:click="toggleStatus({{ $user->id }})"
                                                 class="ml-4 text-yellow-600 hover:text-yellow-900">

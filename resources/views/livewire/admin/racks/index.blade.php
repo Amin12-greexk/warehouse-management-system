@@ -1,4 +1,4 @@
-﻿<div>
+<div>
     <x-slot name="header">
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('Master Rak') }}
@@ -32,7 +32,7 @@
                                 <option value="full">Penuh</option>
                                 <option value="maintenance">Maintenance</option>
                             </select>
-                            <x-primary-button onclick="location.href='{{ route('admin.racks.create') }}'" wire:navigate>
+                            <x-primary-button onclick="location.href='{{ route('admin.racks.create') }}'">
                                 Tambah Rak
                             </x-primary-button>
                         </div>
@@ -64,7 +64,7 @@
                                             </span>
                                         </td>
                                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                            <a href="{{ route('admin.racks.edit', $rack) }}" wire:navigate class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                            <a href="{{ route('admin.racks.edit', $rack) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
                                             <button wire:click="deleteRack({{ $rack->id }})" wire:confirm="Anda yakin ingin menghapus rak ini?" class="ml-4 text-red-600 hover:text-red-900">Hapus</button>
                                         </td>
                                     </tr>

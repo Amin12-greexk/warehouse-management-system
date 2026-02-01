@@ -123,7 +123,7 @@
                     </div>
 
                     <div class="flex flex-col-reverse md:flex-row items-stretch md:items-center justify-end mt-4 md:mt-6 gap-2 md:gap-3">
-                        <x-secondary-button type="button" wire:navigate href="{{ route('admin.users.index') }}" class="w-full md:w-auto justify-center">
+                        <x-secondary-button type="button" href="{{ route('admin.users.index') }}" class="w-full md:w-auto justify-center">
                             {{ __('Batal') }}
                         </x-secondary-button>
 

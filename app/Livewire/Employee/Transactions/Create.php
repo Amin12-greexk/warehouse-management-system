@@ -16,6 +16,7 @@ class Create extends Component
     use WithFileUploads;
 
     public $type = 'in'; // in or out
+    public $barcode;
     public $item_id;
     public $quantity;
     public $rack_id;
@@ -28,6 +29,7 @@ class Create extends Component
     {
         return [
             'type' => 'required|in:in,out',
+            'barcode' => 'nullable|string|max:64',
             'item_id' => 'required|exists:items,id',
             'quantity' => 'required|integer|min:1',
             'rack_id' => 'required|exists:racks,id',
@@ -41,7 +43,35 @@ class Create extends Component
     public function updatedType()
     {
         // Reset form when type changes
-        $this->reset(['item_id', 'quantity', 'rack_id', 'supplier_id', 'notes']);
+        $this->reset(['barcode', 'item_id', 'quantity', 'rack_id', 'supplier_id', 'notes']);
+    }
+
+    public function applyBarcode()
+    {
+        $barcode = trim((string) $this->barcode);
+        if ($barcode === '') {
+            return;
+        }
+
+        $item = Item::where('barcode', $barcode)
+            ->orWhere('item_code', $barcode)
+            ->first();
+
+        if (! $item) {
+            $this->addError('barcode', 'Barcode tidak ditemukan.');
+            return;
+        }
+
+        $this->resetErrorBag('barcode');
+        $this->item_id = $item->id;
+
+        if ($this->type === 'in' && $item->supplier_id) {
+            $this->supplier_id = $item->supplier_id;
+        }
+
+        if ($this->type === 'out' && $item->rack_id) {
+            $this->rack_id = $item->rack_id;
+        }
     }
 
     public function save()

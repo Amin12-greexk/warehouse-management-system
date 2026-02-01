@@ -8,24 +8,28 @@ use Livewire\WithFileUploads;
 use App\Models\Item;
 use App\Models\Supplier;
 use App\Models\Rack;
+use Illuminate\Validation\Rule;
 
 class Index extends Component
 {
     use WithPagination, WithFileUploads;
+
+    protected $listeners = ['scan-barcode' => 'applyBarcodeFromEvent'];
 
     public $search = '';
     public $typeFilter = '';
     public $supplierFilter = '';
     public $stockFilter = '';
     public $perPage = 10;
+    public $barcodeScan = '';
 
-    // For modals
-    public $showCreateModal = false;
-    public $showEditModal = false;
     public $editingItem = null;
+    public $stockItemId = null;
+    public $stockAdjust = 0;
 
     // Form fields
     public $item_code;
+    public $barcode;
     public $name;
     public $type = 'raw_material';
     public $supplier_id;
@@ -37,19 +41,25 @@ class Index extends Component
     public $description;
     public $image;
 
-    protected $rules = [
-        'item_code' => 'required|unique:items,item_code',
-        'name' => 'required|min:3',
-        'type' => 'required|in:raw_material,finished_goods,spare_parts,consumable',
-        'supplier_id' => 'required|exists:suppliers,id',
-        'rack_id' => 'nullable|exists:racks,id',
-        'stock' => 'required|numeric|min:0',
-        'minimum_stock' => 'required|numeric|min:0',
-        'unit' => 'required',
-        'price' => 'required|numeric|min:0',
-        'description' => 'nullable',
-        'image' => 'nullable|image|max:2048'
-    ];
+    protected function rules()
+    {
+        $itemId = $this->editingItem?->id;
+
+        return [
+            'item_code' => ['required', Rule::unique('items', 'item_code')->ignore($itemId)],
+            'barcode' => ['nullable', 'string', 'max:64', Rule::unique('items', 'barcode')->ignore($itemId)],
+            'name' => 'required|min:3',
+            'type' => 'required|in:raw_material,finished_goods,spare_parts,consumable',
+            'supplier_id' => 'required|exists:suppliers,id',
+            'rack_id' => 'nullable|exists:racks,id',
+            'stock' => 'required|numeric|min:0',
+            'minimum_stock' => 'required|numeric|min:0',
+            'unit' => 'required',
+            'price' => 'required|numeric|min:0',
+            'description' => 'nullable',
+            'image' => 'nullable|image|max:2048'
+        ];
+    }
 
     public function mount()
     {
@@ -92,7 +102,7 @@ class Index extends Component
     {
         $this->resetForm();
         $this->generateItemCode();
-        $this->showCreateModal = true;
+        $this->dispatch('open-modal', 'create-item-modal');
     }
 
     public function editItem($itemId)
@@ -101,6 +111,7 @@ class Index extends Component
         $this->editingItem = $item;
 
         $this->item_code = $item->item_code;
+        $this->barcode = $item->barcode;
         $this->name = $item->name;
         $this->type = $item->type;
         $this->supplier_id = $item->supplier_id;
@@ -111,7 +122,89 @@ class Index extends Component
         $this->price = $item->price;
         $this->description = $item->description;
 
-        $this->showEditModal = true;
+        $this->dispatch('open-modal', 'edit-item-modal');
+    }
+
+    public function closeCreateModal()
+    {
+        $this->resetForm();
+        $this->dispatch('close-modal', 'create-item-modal');
+    }
+
+    public function closeEditModal()
+    {
+        $this->resetForm();
+        $this->dispatch('close-modal', 'edit-item-modal');
+    }
+
+    public function applyBarcodeFromEvent($payload = null)
+    {
+        $barcode = is_array($payload) ? ($payload['code'] ?? '') : (string) $payload;
+        $this->applyBarcode($barcode);
+    }
+
+    public function applyBarcode($barcode = null)
+    {
+        $barcode = trim((string) ($barcode ?? $this->barcodeScan));
+        if ($barcode === '') {
+            return;
+        }
+
+        if ($this->editingItem) {
+            $this->barcode = $barcode;
+            $this->resetErrorBag('barcode');
+            return;
+        }
+
+        $item = Item::where('barcode', $barcode)
+            ->orWhere('item_code', $barcode)
+            ->first();
+
+        if (! $item) {
+            $this->resetForm();
+            $this->barcode = $barcode;
+            $this->generateItemCode();
+            $this->dispatch('open-modal', 'create-item-modal');
+            return;
+        }
+
+        $this->stockItemId = $item->id;
+        $this->stockAdjust = 0;
+        $this->dispatch('open-modal', 'stock-item-modal');
+    }
+
+    public function saveStockAdjustment()
+    {
+        $this->validate([
+            'stockItemId' => 'required|exists:items,id',
+            'stockAdjust' => 'required|integer|min:1',
+        ], [
+            'stockAdjust.required' => 'Jumlah stok wajib diisi.',
+            'stockAdjust.integer' => 'Jumlah stok harus angka.',
+            'stockAdjust.min' => 'Jumlah stok minimal 1.',
+        ]);
+
+        $item = Item::findOrFail($this->stockItemId);
+        $item->increment('stock', $this->stockAdjust);
+
+        session()->flash('message', 'Stok berhasil ditambahkan.');
+
+        $this->stockAdjust = 0;
+        $this->barcodeScan = '';
+        $this->stockItemId = null;
+        $this->dispatch('close-modal', 'stock-item-modal');
+    }
+
+    public function closeStockModal()
+    {
+        $this->stockAdjust = 0;
+        $this->stockItemId = null;
+        $this->dispatch('close-modal', 'stock-item-modal');
+    }
+
+    public function getStockItemProperty()
+    {
+        return $this->stockItemId ? Item::find($this->stockItemId) : null;
     }
 
     public function save()
@@ -120,6 +213,7 @@ class Index extends Component
 
         $data = [
             'item_code' => $this->item_code,
+            'barcode' => $this->barcode,
             'name' => $this->name,
             'type' => $this->type,
             'supplier_id' => $this->supplier_id,
@@ -144,8 +238,8 @@ class Index extends Component
         }
 
         $this->resetForm();
-        $this->showCreateModal = false;
-        $this->showEditModal = false;
+        $this->dispatch('close-modal', 'create-item-modal');
+        $this->dispatch('close-modal', 'edit-item-modal');
     }
 
     public function deleteItem($itemId)
@@ -166,6 +260,7 @@ class Index extends Component
     {
         $this->reset([
             'item_code',
+            'barcode',
             'name',
             'type',
             'supplier_id',
@@ -192,7 +287,8 @@ class Index extends Component
             ->when($this->search, function ($query) {
                 $query->where(function ($q) {
                     $q->where('name', 'like', '%' . $this->search . '%')
-                        ->orWhere('item_code', 'like', '%' . $this->search . '%');
+                        ->orWhere('item_code', 'like', '%' . $this->search . '%')
+                        ->orWhere('barcode', 'like', '%' . $this->search . '%');
                 });
             })
             ->when($this->typeFilter, function ($query) {
@@ -223,7 +319,8 @@ class Index extends Component
         return view('livewire.admin.items.index', [
             'items' => $items,
             'suppliers' => $suppliers,
-            'racks' => $racks
+            'racks' => $racks,
+            'stockItem' => $this->stockItem,
         ])->layout('layouts.app');
     }
 }
