@@ -58,20 +58,7 @@
                             Kelola gudang Anda dengan sistem yang modern, efisien, dan terintegrasi
                         </p>
                     </div>
-                    <div class="flex gap-12 mt-8">
-                        <div class="text-center">
-                            <div class="text-4xl font-bold text-indigo-600">100%</div>
-                            <div class="text-sm text-gray-600 mt-1">Akurasi</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-4xl font-bold text-purple-600">24/7</div>
-                            <div class="text-sm text-gray-600 mt-1">Support</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-4xl font-bold text-pink-600">Fast</div>
-                            <div class="text-sm text-gray-600 mt-1">Processing</div>
-                        </div>
-                    </div>
+                    <!-- Metrics removed -->
                 </div>
 
                 <!-- Right Side - Login Form -->
@@ -191,33 +178,7 @@
                             </button>
                         </form>
 
-                        <!-- Demo Accounts -->
-                        @if(app()->environment('local'))
-                            <div class="mt-6 sm:mt-8 pt-6 border-t border-gray-200">
-                                <div class="flex items-center justify-center mb-4">
-                                    <div class="flex-grow border-t border-gray-300"></div>
-                                    <span class="px-3 sm:px-4 text-xs font-semibold text-gray-500 uppercase">Akun Demo</span>
-                                    <div class="flex-grow border-t border-gray-300"></div>
-                                </div>
-                                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                    <div class="p-3 sm:p-4 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200 text-center hover:shadow-md transition-shadow">
-                                        <div class="text-xs sm:text-sm font-bold text-purple-700 mb-1">Admin</div>
-                                        <div class="text-xs text-purple-600 font-mono">admin</div>
-                                        <div class="text-xs text-purple-500">password</div>
-                                    </div>
-                                    <div class="p-3 sm:p-4 bg-gradient-to-br from-indigo-50 to-indigo-100 rounded-xl border border-indigo-200 text-center hover:shadow-md transition-shadow">
-                                        <div class="text-xs sm:text-sm font-bold text-indigo-700 mb-1">Manager</div>
-                                        <div class="text-xs text-indigo-600 font-mono">manager</div>
-                                        <div class="text-xs text-indigo-500">password</div>
-                                    </div>
-                                    <div class="p-3 sm:p-4 bg-gradient-to-br from-pink-50 to-pink-100 rounded-xl border border-pink-200 text-center hover:shadow-md transition-shadow">
-                                        <div class="text-xs sm:text-sm font-bold text-pink-700 mb-1">Karyawan</div>
-                                        <div class="text-xs text-pink-600 font-mono">karyawan</div>
-                                        <div class="text-xs text-pink-500">password</div>
-                                    </div>
-                                </div>
-                            </div>
-                        @endif
+                        <!-- Demo Accounts removed -->
                     </div>
 
                     <!-- Footer -->

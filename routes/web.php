@@ -90,7 +90,7 @@ Route::middleware(['auth', \App\Http\Middleware\AdminMiddleware::class])
         // Rack Full Reports
         Route::get('/rack-full-reports', \App\Livewire\Admin\RackFullReports\Index::class)->name('rack-full-reports.index');
 
-    
+
         // NONAKTIFKAN SEMENTARA: File Livewire Laporan belum dibuat
         // Route::get('/reports', \App\Livewire\Admin\Reports\Index::class)->name('reports');
         // Route::get('/reports/stock', \App\Livewire\Admin\Reports\Stock::class)->name('reports.stock');
@@ -112,7 +112,9 @@ Route::middleware(['auth', \App\Http\Middleware\ManagerMiddleware::class])
         Route::get('/dashboard', \App\Livewire\Manager\Dashboard::class)->name('dashboard');
         Route::get('/users', \App\Livewire\Manager\Users\Index::class)->name('users.index');
         Route::get('/forecasts', \App\Livewire\Manager\Forecasts\Index::class)->name('forecasts.index');
+        Route::get('/reports', \App\Livewire\Manager\Reports\Index::class)->name('reports.index');
         // Route::get('/items', \App\Livewire\Manager\Items\Index::class)->name('items');
+    
         // Route::get('/items/{item}', \App\Livewire\Manager\Items\Show::class)->name('items.show');
         // Route::get('/transactions', \App\Livewire\Manager\Transactions\Index::class)->name('transactions');
         // Route::get('/transactions/{transaction}', \App\Livewire\Manager\Transactions\Show::class)->name('transactions.show');

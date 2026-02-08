@@ -25,6 +25,12 @@ class Create extends Component
     public $capturedPhoto;
     public $notes;
 
+    // For displaying scanned item info
+    public $scannedItemName;
+    public $scannedItemCode;
+    public $scannedItemStock;
+    public $scanSuccess = false;
+
     protected function rules()
     {
         return [
@@ -42,36 +48,87 @@ class Create extends Component
 
     public function updatedType()
     {
-        // Reset form when type changes
-        $this->reset(['barcode', 'item_id', 'quantity', 'rack_id', 'supplier_id', 'notes']);
+        // DON'T reset form when type changes - preserve filled data
+        // Only reset rack_id if switching types (because destination/source rack may differ)
+        // Keep item_id, barcode, quantity, supplier_id, notes intact
+
+        // If item is selected, auto-set rack based on new type
+        if ($this->item_id) {
+            $item = Item::find($this->item_id);
+            if ($item) {
+                if ($this->type === 'out' && $item->rack_id) {
+                    $this->rack_id = $item->rack_id;
+                } elseif ($this->type === 'in') {
+                    // For incoming, clear rack so user selects destination
+                    $this->rack_id = null;
+                }
+            }
+        }
     }
 
-    public function applyBarcode()
+    public function applyBarcode($barcodeValue = null)
     {
-        $barcode = trim((string) $this->barcode);
+        $rawBarcode = trim((string) ($barcodeValue ?? $this->barcode));
+        $barcode = preg_replace('/\s+/', '', $rawBarcode);
         if ($barcode === '') {
             return;
         }
 
-        $item = Item::where('barcode', $barcode)
+        $this->barcode = $barcode;
+
+        $item = Item::with(['supplier', 'rack'])
+            ->where('barcode', $rawBarcode)
+            ->orWhere('barcode', $barcode)
+            ->orWhere('item_code', $rawBarcode)
             ->orWhere('item_code', $barcode)
             ->first();
 
-        if (! $item) {
+        if (!$item) {
             $this->addError('barcode', 'Barcode tidak ditemukan.');
+            $this->scanSuccess = false;
+            $this->dispatch('scan-error', message: 'Barcode tidak ditemukan');
             return;
         }
 
         $this->resetErrorBag('barcode');
         $this->item_id = $item->id;
 
-        if ($this->type === 'in' && $item->supplier_id) {
+        // Store scanned item info for display
+        $this->scannedItemName = $item->name;
+        $this->scannedItemCode = $item->item_code;
+        $this->scannedItemStock = $item->stock . ' ' . $item->unit;
+        $this->scanSuccess = true;
+
+        // Auto-fill supplier for incoming transactions
+        if ($item->supplier_id) {
             $this->supplier_id = $item->supplier_id;
         }
 
+        // Auto-fill rack based on transaction type
         if ($this->type === 'out' && $item->rack_id) {
+            // For outgoing: use item's current rack as source
             $this->rack_id = $item->rack_id;
+        } elseif ($this->type === 'in' && $item->rack_id) {
+            // For incoming: suggest same rack if available, otherwise leave empty
+            $rack = Rack::find($item->rack_id);
+            if ($rack && !$rack->manual_full && $rack->status !== 'full' && $rack->available_capacity > 0) {
+                $this->rack_id = $item->rack_id;
+            }
         }
+
+        // Set default quantity to 1
+        if (!$this->quantity) {
+            $this->quantity = 1;
+        }
+
+        // Dispatch success event for UI feedback
+        $this->dispatch('scan-success', message: 'Barang ditemukan: ' . $item->name);
+    }
+
+    // Method to receive barcode from camera scanner
+    public function scanBarcode($barcode)
+    {
+        $this->applyBarcode($barcode);
     }
 
     public function save()
@@ -79,7 +136,7 @@ class Create extends Component
         $this->validate();
 
         $rack = Rack::find($this->rack_id);
-        if (! $rack) {
+        if (!$rack) {
             $this->addError('rack_id', 'Rak tidak ditemukan.');
             return;
         }

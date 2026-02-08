@@ -12,14 +12,22 @@ class ForecastService
     private const TEST_SIZE_MONTHS = 3;
     private const MAX_HISTORY_MONTHS = 36;
 
+    // Minimum periods for backtesting
+    private const MIN_BACKTEST_PERIODS = 3;
+    private const MAX_BACKTEST_PERIODS = 12;
+
     private const METHOD_AUTO = 'auto';
     private const METHOD_HYBRID = 'hybrid';
     private const METHOD_SEASONAL = 'seasonal';
     private const METHOD_TREND = 'trend';
     private const METHOD_SIMPLE = 'simple';
+    private const METHOD_WMA = 'wma';
+    private const METHOD_ENSEMBLE = 'ensemble';
 
-    private const ALPHAS = [0.2, 0.4, 0.6, 0.8];
-    private const BETAS = [0.1, 0.3, 0.5];
+    // Expanded parameter grid for better optimization
+    private const ALPHAS = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9];
+    private const BETAS = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5];
+    private const PHIS = [0.8, 0.9, 0.95, 0.98, 1.0]; // Damping factors
 
     public function __construct(private HoltWinters $holtWinters)
     {
@@ -78,37 +86,37 @@ class ForecastService
         $seriesData = $this->buildSeries($demands->toArray(), $source);
         $series = $this->trimRecentSeries($seriesData['series'], $seasonLength);
 
+        // Apply outlier detection and smoothing
+        $series = $this->removeOutliers($series);
+
         if ($this->countNonZero($series) < self::MIN_DATA_POINTS) {
             return 0;
         }
 
         $seriesCount = count($series);
+
+        // Determine the best method and calculate accuracy using backtesting
         if ($seriesCount < 3) {
             $finalMethod = self::METHOD_SIMPLE;
             $result = $this->forecastSeries($series, $seasonLength, $horizon, $finalMethod);
-            $accuracy = ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
+            $accuracy = $this->backtestAccuracy($series, $seasonLength, $finalMethod);
         } else {
-            $testSize = $this->resolveTestSize($seriesCount, $seasonLength);
-            $train = array_slice($series, 0, $seriesCount - $testSize);
-            $test = array_slice($series, $seriesCount - $testSize);
-
             if ($method === self::METHOD_AUTO) {
-                $selection = $this->selectAutoMethod($train, $test, $seasonLength);
-                $evalMethod = $selection['method'];
+                // Use backtesting to select the best method
+                $selection = $this->selectBestMethodByBacktest($series, $seasonLength);
+                $finalMethod = $selection['method'];
                 $accuracy = $selection['accuracy'];
             } elseif ($method === self::METHOD_HYBRID) {
-                $evalMethod = $this->selectHybridMethod($seriesCount, $seasonLength);
-                $evalResult = $this->forecastSeries($train, $seasonLength, $testSize, $evalMethod);
-                $accuracy = $this->calculateAccuracy($test, $evalResult['forecast']);
+                $finalMethod = $this->selectHybridMethod($seriesCount, $seasonLength);
+                $accuracy = $this->backtestAccuracy($series, $seasonLength, $finalMethod);
+            } elseif ($method === self::METHOD_ENSEMBLE) {
+                $finalMethod = self::METHOD_ENSEMBLE;
+                $accuracy = $this->backtestEnsembleAccuracy($series, $seasonLength);
             } else {
-                $evalMethod = $method;
-                $evalResult = $this->forecastSeries($train, $seasonLength, $testSize, $evalMethod);
-                $accuracy = $this->calculateAccuracy($test, $evalResult['forecast']);
+                $finalMethod = $method;
+                $accuracy = $this->backtestAccuracy($series, $seasonLength, $finalMethod);
             }
 
-            $finalMethod = ($method === self::METHOD_AUTO || $method === self::METHOD_HYBRID)
-                ? $evalMethod
-                : $method;
             $result = $this->forecastSeries($series, $seasonLength, $horizon, $finalMethod);
         }
 
@@ -153,6 +161,352 @@ class ForecastService
         return $saved;
     }
 
+    /**
+     * Rolling Window Backtesting - Calculate accuracy over multiple periods
+     * This provides a more robust accuracy measure than single train/test split
+     */
+    private function backtestAccuracy(array $series, int $seasonLength, string $method): array
+    {
+        $count = count($series);
+        $minTrain = max($seasonLength * 2, 6);
+
+        // Need enough data for backtesting
+        if ($count < $minTrain + self::MIN_BACKTEST_PERIODS) {
+            // Fall back to simple MAE-based accuracy
+            return $this->estimateAccuracyFromMAE($series, $seasonLength, $method);
+        }
+
+        $errors = [];
+        $absoluteErrors = [];
+
+        // Rolling window: train on first N periods, predict next, slide window
+        $numTests = min(self::MAX_BACKTEST_PERIODS, $count - $minTrain);
+
+        for ($i = 0; $i < $numTests; $i++) {
+            $trainEnd = $count - $numTests + $i;
+            $train = array_slice($series, 0, $trainEnd);
+            $actual = $series[$trainEnd];
+
+            if ($actual <= 0) {
+                continue; // Skip zero actuals
+            }
+
+            // Make 1-step ahead forecast
+            $forecast = $this->forecastSeries($train, $seasonLength, 1, $method);
+            $predicted = $forecast['forecast'][1] ?? 0;
+
+            // Calculate percentage error
+            $error = abs($actual - $predicted) / $actual;
+            $errors[] = $error;
+            $absoluteErrors[] = abs($actual - $predicted);
+        }
+
+        if (empty($errors)) {
+            return $this->estimateAccuracyFromMAE($series, $seasonLength, $method);
+        }
+
+        $mape = array_sum($errors) / count($errors);
+        $accuracyPercent = max(0, min(100, (1 - $mape) * 100));
+
+        return [
+            'percent' => round($accuracyPercent, 2),
+            'value' => round($mape, 4),
+            'samples' => count($errors),
+        ];
+    }
+
+    /**
+     * Select the best method using backtesting across all candidates
+     */
+    private function selectBestMethodByBacktest(array $series, int $seasonLength): array
+    {
+        $candidates = [self::METHOD_SIMPLE, self::METHOD_WMA, self::METHOD_TREND];
+
+        if (count($series) >= $seasonLength * 2) {
+            $candidates[] = self::METHOD_SEASONAL;
+        }
+
+        $best = null;
+
+        foreach ($candidates as $method) {
+            $accuracy = $this->backtestAccuracy($series, $seasonLength, $method);
+
+            // Higher accuracy percent is better
+            if ($best === null || $accuracy['percent'] > $best['accuracy']['percent']) {
+                $best = [
+                    'method' => $method,
+                    'accuracy' => $accuracy,
+                ];
+            }
+        }
+
+        return $best ?? [
+            'method' => self::METHOD_SIMPLE,
+            'accuracy' => ['percent' => 0.0, 'value' => 0.0, 'samples' => 0],
+        ];
+    }
+
+    /**
+     * Backtest ensemble method
+     */
+    private function backtestEnsembleAccuracy(array $series, int $seasonLength): array
+    {
+        $count = count($series);
+        $minTrain = max($seasonLength * 2, 6);
+
+        if ($count < $minTrain + self::MIN_BACKTEST_PERIODS) {
+            return $this->estimateAccuracyFromMAE($series, $seasonLength, self::METHOD_ENSEMBLE);
+        }
+
+        $errors = [];
+        $numTests = min(self::MAX_BACKTEST_PERIODS, $count - $minTrain);
+
+        for ($i = 0; $i < $numTests; $i++) {
+            $trainEnd = $count - $numTests + $i;
+            $train = array_slice($series, 0, $trainEnd);
+            $actual = $series[$trainEnd];
+
+            if ($actual <= 0) {
+                continue;
+            }
+
+            $forecast = $this->forecastEnsemble($train, $seasonLength, 1);
+            $predicted = $forecast['forecast'][1] ?? 0;
+
+            $error = abs($actual - $predicted) / $actual;
+            $errors[] = $error;
+        }
+
+        if (empty($errors)) {
+            return ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
+        }
+
+        $mape = array_sum($errors) / count($errors);
+        $accuracyPercent = max(0, min(100, (1 - $mape) * 100));
+
+        return [
+            'percent' => round($accuracyPercent, 2),
+            'value' => round($mape, 4),
+            'samples' => count($errors),
+        ];
+    }
+
+    /**
+     * Estimate accuracy from MAE when not enough data for backtesting
+     * Uses coefficient of variation as proxy
+     */
+    private function estimateAccuracyFromMAE(array $series, int $seasonLength, string $method): array
+    {
+        $result = $this->forecastSeries($series, $seasonLength, 1, $method);
+        $mae = $result['mae'] ?? null;
+
+        if ($mae === null) {
+            return ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
+        }
+
+        // Calculate mean of series
+        $nonZeroValues = array_filter($series, fn($v) => $v > 0);
+        if (empty($nonZeroValues)) {
+            return ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
+        }
+
+        $mean = array_sum($nonZeroValues) / count($nonZeroValues);
+
+        if ($mean <= 0) {
+            return ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
+        }
+
+        // Accuracy based on MAE relative to mean
+        $maeRatio = $mae / $mean;
+        $accuracyPercent = max(0, min(100, (1 - $maeRatio) * 100));
+
+        return [
+            'percent' => round($accuracyPercent, 2),
+            'value' => round($maeRatio, 4),
+            'samples' => count($nonZeroValues),
+        ];
+    }
+
+    /**
+     * Remove outliers using IQR method and replace with interpolated values
+     */
+    private function removeOutliers(array $series): array
+    {
+        $count = count($series);
+        if ($count < 4) {
+            return $series;
+        }
+
+        $sorted = $series;
+        sort($sorted);
+
+        $q1Index = (int) floor($count * 0.25);
+        $q3Index = (int) floor($count * 0.75);
+
+        $q1 = $sorted[$q1Index];
+        $q3 = $sorted[$q3Index];
+        $iqr = $q3 - $q1;
+
+        // Define bounds (using 1.5 * IQR as typical)
+        $lowerBound = $q1 - (1.5 * $iqr);
+        $upperBound = $q3 + (1.5 * $iqr);
+
+        $cleaned = [];
+        for ($i = 0; $i < $count; $i++) {
+            $value = $series[$i];
+
+            if ($value < $lowerBound || $value > $upperBound) {
+                // Replace outlier with interpolated value
+                $prev = $i > 0 ? $cleaned[$i - 1] : $value;
+                $next = $i < $count - 1 ? $series[$i + 1] : $value;
+
+                // Check if next is also outlier, use moving average instead
+                if ($next < $lowerBound || $next > $upperBound) {
+                    $window = array_slice($series, max(0, $i - 3), min(6, $count - max(0, $i - 3)));
+                    $validValues = array_filter($window, fn($v) => $v >= $lowerBound && $v <= $upperBound);
+                    $cleaned[$i] = !empty($validValues) ? array_sum($validValues) / count($validValues) : $prev;
+                } else {
+                    $cleaned[$i] = ($prev + $next) / 2;
+                }
+            } else {
+                $cleaned[$i] = $value;
+            }
+        }
+
+        return $cleaned;
+    }
+
+    /**
+     * Weighted Moving Average method
+     */
+    private function fitWMA(array $series, int $horizon): array
+    {
+        $count = count($series);
+        if ($count < 2) {
+            return $this->fitSimple($series, $horizon);
+        }
+
+        // Use last 6 months with exponentially decreasing weights
+        $window = min(6, $count);
+        $weights = [];
+        $totalWeight = 0;
+
+        for ($i = 0; $i < $window; $i++) {
+            $weight = pow(0.85, $window - 1 - $i); // Most recent gets highest weight
+            $weights[] = $weight;
+            $totalWeight += $weight;
+        }
+
+        // Normalize weights
+        $weights = array_map(fn($w) => $w / $totalWeight, $weights);
+
+        // Calculate weighted average
+        $slice = array_slice($series, $count - $window, $window);
+        $weightedSum = 0;
+        for ($i = 0; $i < $window; $i++) {
+            $weightedSum += $slice[$i] * $weights[$i];
+        }
+
+        // Calculate weighted trend
+        $trend = 0;
+        if ($window >= 3) {
+            $recentTrends = [];
+            for ($i = 1; $i < $window; $i++) {
+                $recentTrends[] = $slice[$i] - $slice[$i - 1];
+            }
+            $trend = array_sum($recentTrends) / count($recentTrends) * 0.5; // Damped trend
+        }
+
+        // Calculate MAE on training data
+        $maeTotal = 0;
+        $maeCount = 0;
+        for ($t = $window; $t < $count; $t++) {
+            $startIdx = $t - $window;
+            $testSlice = array_slice($series, $startIdx, $window);
+            $predicted = 0;
+            for ($i = 0; $i < $window; $i++) {
+                $predicted += $testSlice[$i] * $weights[$i];
+            }
+            $maeTotal += abs($series[$t] - $predicted);
+            $maeCount++;
+        }
+
+        $forecast = [];
+        for ($m = 1; $m <= $horizon; $m++) {
+            $forecast[$m] = max(0, $weightedSum + ($trend * $m));
+        }
+
+        return [
+            'method' => self::METHOD_WMA,
+            'forecast' => $forecast,
+            'alpha' => null,
+            'beta' => null,
+            'gamma' => null,
+            'season_length' => null,
+            'mae' => $maeCount > 0 ? $maeTotal / $maeCount : null,
+        ];
+    }
+
+    /**
+     * Ensemble forecasting - combines multiple methods
+     */
+    private function forecastEnsemble(array $series, int $seasonLength, int $horizon): array
+    {
+        $methods = [
+            self::METHOD_SIMPLE => $this->fitSimple($series, $horizon),
+            self::METHOD_WMA => $this->fitWMA($series, $horizon),
+            self::METHOD_TREND => $this->fitHoltLinear($series, $horizon),
+        ];
+
+        // Add seasonal if enough data
+        if (count($series) >= $seasonLength * 2) {
+            $methods[self::METHOD_SEASONAL] = $this->fitSeasonalAdditive($series, $seasonLength, $horizon);
+        }
+
+        // Calculate weights based on inverse MAE
+        $totalWeight = 0;
+        $weights = [];
+        foreach ($methods as $name => $result) {
+            $mae = $result['mae'] ?? 999999;
+            if ($mae <= 0) {
+                $mae = 0.001;
+            }
+            $weight = 1 / $mae;
+            $weights[$name] = $weight;
+            $totalWeight += $weight;
+        }
+
+        // Normalize weights
+        foreach ($weights as $name => $weight) {
+            $weights[$name] = $totalWeight > 0 ? $weight / $totalWeight : 1 / count($methods);
+        }
+
+        // Combine forecasts
+        $forecast = [];
+        for ($m = 1; $m <= $horizon; $m++) {
+            $weightedValue = 0;
+            foreach ($methods as $name => $result) {
+                $value = $result['forecast'][$m] ?? 0;
+                $weightedValue += $value * $weights[$name];
+            }
+            $forecast[$m] = max(0, $weightedValue);
+        }
+
+        // Calculate combined MAE
+        $maes = array_filter(array_map(fn($r) => $r['mae'], $methods), fn($m) => $m !== null);
+        $avgMae = !empty($maes) ? array_sum($maes) / count($maes) : null;
+
+        return [
+            'method' => self::METHOD_ENSEMBLE,
+            'forecast' => $forecast,
+            'alpha' => null,
+            'beta' => null,
+            'gamma' => null,
+            'season_length' => $seasonLength,
+            'mae' => $avgMae,
+        ];
+    }
+
     private function normalizeMethod(string $method): string
     {
         $method = strtolower(trim($method));
@@ -160,6 +514,8 @@ class ForecastService
         return match ($method) {
             self::METHOD_AUTO => self::METHOD_AUTO,
             self::METHOD_HYBRID => self::METHOD_HYBRID,
+            self::METHOD_ENSEMBLE, 'combined' => self::METHOD_ENSEMBLE,
+            self::METHOD_WMA, 'weighted', 'weighted_ma' => self::METHOD_WMA,
             self::METHOD_SEASONAL,
             'holt-winters',
             'holt_winters',
@@ -178,51 +534,6 @@ class ForecastService
         };
     }
 
-    private function selectAutoMethod(array $train, array $test, int $seasonLength): array
-    {
-        $testSize = count($test);
-        if ($testSize === 0) {
-            return [
-                'method' => self::METHOD_SIMPLE,
-                'accuracy' => ['percent' => 0.0, 'value' => 0.0, 'samples' => 0],
-            ];
-        }
-
-        $candidates = [self::METHOD_SIMPLE, self::METHOD_TREND];
-        $seasonLength = max(2, $seasonLength);
-        if (count($train) >= ($seasonLength * 2)) {
-            $candidates[] = self::METHOD_SEASONAL;
-        }
-
-        $best = null;
-        foreach ($candidates as $candidate) {
-            $result = $this->forecastSeries($train, $seasonLength, $testSize, $candidate);
-            $accuracy = $this->calculateAccuracy($test, $result['forecast']);
-            $samples = $accuracy['samples'] ?? 0;
-            $score = $samples > 0 ? $accuracy['value'] : INF;
-
-            if ($best === null || $score < $best['score']) {
-                $best = [
-                    'method' => $candidate,
-                    'accuracy' => $accuracy,
-                    'score' => $score,
-                ];
-            }
-        }
-
-        if ($best === null) {
-            return [
-                'method' => self::METHOD_SIMPLE,
-                'accuracy' => ['percent' => 0.0, 'value' => 0.0, 'samples' => 0],
-            ];
-        }
-
-        return [
-            'method' => $best['method'],
-            'accuracy' => $best['accuracy'],
-        ];
-    }
-
     private function selectHybridMethod(int $seriesCount, int $seasonLength): string
     {
         $seasonLength = max(2, $seasonLength);
@@ -234,6 +545,10 @@ class ForecastService
 
         if ($seriesCount >= $seasonLength) {
             return self::METHOD_TREND;
+        }
+
+        if ($seriesCount >= 4) {
+            return self::METHOD_WMA;
         }
 
         return self::METHOD_SIMPLE;
@@ -248,6 +563,8 @@ class ForecastService
         return match ($method) {
             self::METHOD_SEASONAL => $this->fitSeasonalAdditive($series, $seasonLength, $horizon),
             self::METHOD_TREND => $this->fitHoltLinear($series, $horizon),
+            self::METHOD_WMA => $this->fitWMA($series, $horizon),
+            self::METHOD_ENSEMBLE => $this->forecastEnsemble($series, $seasonLength, $horizon),
             default => $this->fitSimple($series, $horizon),
         };
     }
@@ -315,17 +632,22 @@ class ForecastService
         $best = null;
         foreach (self::ALPHAS as $alpha) {
             foreach (self::BETAS as $beta) {
-                $fit = $this->holtLinear($series, $alpha, $beta, $horizon);
-                if ($best === null || ($fit['mae'] !== null && ($best['mae'] === null || $fit['mae'] < $best['mae']))) {
-                    $best = $fit;
+                foreach (self::PHIS as $phi) {
+                    $fit = $this->holtLinearDamped($series, $alpha, $beta, $phi, $horizon);
+                    if ($best === null || ($fit['mae'] !== null && ($best['mae'] === null || $fit['mae'] < $best['mae']))) {
+                        $best = $fit;
+                    }
                 }
             }
         }
 
-        return $best ?? $this->holtLinear($series, 0.4, 0.3, $horizon);
+        return $best ?? $this->holtLinearDamped($series, 0.4, 0.3, 0.95, $horizon);
     }
 
-    private function holtLinear(array $series, float $alpha, float $beta, int $horizon): array
+    /**
+     * Holt-Linear with damped trend
+     */
+    private function holtLinearDamped(array $series, float $alpha, float $beta, float $phi, int $horizon): array
     {
         $count = count($series);
         $level = (float) $series[0];
@@ -334,22 +656,27 @@ class ForecastService
         $maeCount = 0;
 
         for ($t = 1; $t < $count; $t++) {
-            $fitted = $level + $trend;
+            $dampedTrend = $phi * $trend;
+            $fitted = $level + $dampedTrend;
             $maeTotal += abs($series[$t] - $fitted);
             $maeCount++;
 
             $prevLevel = $level;
-            $level = $alpha * $series[$t] + (1 - $alpha) * ($level + $trend);
-            $trend = $beta * ($level - $prevLevel) + (1 - $beta) * $trend;
+            $level = $alpha * $series[$t] + (1 - $alpha) * ($level + $dampedTrend);
+            $trend = $beta * ($level - $prevLevel) + (1 - $beta) * $dampedTrend;
         }
 
         $forecast = [];
         for ($m = 1; $m <= $horizon; $m++) {
-            $forecast[$m] = $level + ($trend * $m);
+            // Cumulative damping: phi + phi^2 + ... + phi^m
+            $cumulativeDamping = $this->cumulativeDamping($phi, $m);
+            $forecast[$m] = $level + ($trend * $cumulativeDamping);
         }
 
+        $methodName = $phi < 1.0 ? 'trend_damped' : self::METHOD_TREND;
+
         return [
-            'method' => self::METHOD_TREND,
+            'method' => $methodName,
             'forecast' => $forecast,
             'alpha' => $alpha,
             'beta' => $beta,
@@ -359,31 +686,13 @@ class ForecastService
         ];
     }
 
-    private function calculateAccuracy(array $actuals, array $predicted): array
+    private function cumulativeDamping(float $phi, int $m): float
     {
-        $errors = [];
-        foreach ($actuals as $index => $actual) {
-            if ($actual <= 0) {
-                continue;
-            }
-
-            $forecastValue = $predicted[$index + 1] ?? 0.0;
-            $errors[] = abs($actual - $forecastValue) / $actual;
+        if (abs($phi - 1.0) < 0.0001) {
+            return (float) $m;
         }
 
-        if (count($errors) === 0) {
-            return ['percent' => 0.0, 'value' => 0.0, 'samples' => 0];
-        }
-
-        $samples = count($errors);
-        $mape = array_sum($errors) / $samples;
-        $accuracyPercent = max(0, 100 - ($mape * 100));
-
-        return [
-            'percent' => round($accuracyPercent, 2),
-            'value' => round($mape, 4),
-            'samples' => $samples,
-        ];
+        return $phi * (1 - pow($phi, $m)) / (1 - $phi);
     }
 
     private function emptyForecast(): array
@@ -400,7 +709,7 @@ class ForecastService
 
     private function countNonZero(array $series): int
     {
-        return count(array_filter($series, fn ($value) => $value > 0));
+        return count(array_filter($series, fn($value) => $value > 0));
     }
 
     private function trimRecentSeries(array $series, int $seasonLength): array
@@ -413,22 +722,6 @@ class ForecastService
         }
 
         return array_slice($series, -$keepMonths);
-    }
-
-    private function resolveTestSize(int $seriesCount, int $seasonLength): int
-    {
-        if ($seriesCount <= 1) {
-            return 1;
-        }
-
-        $defaultSize = min(self::TEST_SIZE_MONTHS, $seriesCount - 1);
-        $seasonLength = max(2, $seasonLength);
-
-        if ($seriesCount >= ($seasonLength * 3)) {
-            return min($seasonLength, $seriesCount - ($seasonLength * 2));
-        }
-
-        return $defaultSize;
     }
 
     private function buildSeries(array $rows, string $source): array
